@@ -8,8 +8,10 @@ networking:
 
 nodes:
 - role: control-plane
+  image: kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72  # Fixed kubernetes version
   kubeadmConfigPatches:
   - |
+    apiVersion: kubeadm.k8s.io/v1beta3
     kind: InitConfiguration
     nodeRegistration:
       kubeletExtraArgs:
@@ -22,7 +24,7 @@ nodes:
     - containerPort: 443
       hostPort: 443
       protocol: TCP
-    # Services
+    # Backend Services
     - containerPort: 30080
       hostPort: 8080
       protocol: TCP
@@ -38,7 +40,7 @@ nodes:
     - containerPort: 30084
       hostPort: 8084
       protocol: TCP
-    # Backend services
+    # DB services
     - containerPort: 27017
       hostPort: 27017
       protocol: TCP
