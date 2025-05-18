@@ -1,0 +1,66 @@
+﻿kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: e-commerce-cluster
+
+networking:
+  ipFamily: dual
+  apiServerAddress: "127.0.0.1"
+
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+    # Store UI
+    - containerPort: 80
+      hostPort: 80
+      protocol: TCP
+    - containerPort: 443
+      hostPort: 443
+      protocol: TCP
+    # Services
+    - containerPort: 30080
+      hostPort: 8080
+      protocol: TCP
+    - containerPort: 30081
+      hostPort: 8081
+      protocol: TCP
+    - containerPort: 30082
+      hostPort: 8082
+      protocol: TCP
+    - containerPort: 30083
+      hostPort: 8083
+      protocol: TCP
+    - containerPort: 30084
+      hostPort: 8084
+      protocol: TCP
+    # Backend services
+    - containerPort: 27017
+      hostPort: 27017
+      protocol: TCP
+    - containerPort: 6379
+      hostPort: 6379
+      protocol: TCP
+    - containerPort: 9200
+      hostPort: 9200
+      protocol: TCP
+
+# Registry configuration
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".containerd]
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+      runtime_type = "io.containerd.runc.v2"
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+      endpoint = ["https://registry-1.docker.io"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs]
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001".tls]
+        insecure_skip_verify = true
