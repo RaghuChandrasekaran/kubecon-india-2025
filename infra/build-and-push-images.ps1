@@ -24,8 +24,8 @@ function Write-Warning {
     Write-Host "⚠️ $message" -ForegroundColor DarkYellow
 }
 
-# Configuration
-$registryUrl = "localhost:5001"
+# Configuration - Can be overridden by environment variables
+$registryUrl = if ($env:REGISTRY_URL) { $env:REGISTRY_URL } else { "localhost:5001" }
 $services = @(
     @{
         Name = "cart"
