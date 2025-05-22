@@ -8,3 +8,9 @@ resources:
   - search
   - store-ui
   - users
+
+# Base ConfigMap that will be merged with overlays
+configMapGenerator:
+  - name: app-env
+    literals:
+      - ENVIRONMENT=base

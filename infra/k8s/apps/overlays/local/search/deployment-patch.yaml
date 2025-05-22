@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: search
+        image: localhost:5001/search:latest

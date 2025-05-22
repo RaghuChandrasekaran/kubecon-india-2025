@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: products
+        image: localhost:5001/products:latest

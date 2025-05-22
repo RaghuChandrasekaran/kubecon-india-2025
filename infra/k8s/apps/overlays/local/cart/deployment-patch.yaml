@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: cart
+        image: localhost:5001/cart:latest

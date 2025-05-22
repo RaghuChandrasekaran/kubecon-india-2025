@@ -1,7 +1,42 @@
+[CmdletBinding()]
+param(
+    [Parameter()]
+    [switch]$Reset,
+    
+    [Parameter()]
+    [switch]$Continue,
+    
+    [Parameter()]
+    [ValidateSet('prerequisites', 'cluster', 'images', 'infrastructure', 'applications')]
+    [string]$Step
+)
+
 # Helper Functions - Importing common styling functions
 . "$PSScriptRoot\build-and-push-images.ps1"
 
-function Check-Command {
+# State management
+$stateFile = Join-Path $PSScriptRoot ".dev-env-state"
+
+function Get-SetupState {
+    if (Test-Path $stateFile) {
+        Get-Content $stateFile
+    } else {
+        "init"
+    }
+}
+
+function Update-SetupState {
+    param([string]$state)
+    $state | Set-Content $stateFile
+}
+
+function Reset-SetupState {
+    if (Test-Path $stateFile) {
+        Remove-Item $stateFile
+    }
+}
+
+function Test-Command {
     param([string]$command)
     
     try {
@@ -12,7 +47,7 @@ function Check-Command {
     }
 }
 
-function Check-Prerequisites {
+function Test-Prerequisites {
     Write-Phase "Checking Prerequisites"
     
     $prerequisites = @{
@@ -23,7 +58,7 @@ function Check-Prerequisites {
     
     $allPresent = $true
     foreach ($prereq in $prerequisites.GetEnumerator()) {
-        if (Check-Command $prereq.Key) {
+        if (Test-Command $prereq.Key) {
             Write-Success "$($prereq.Value) is installed"
         } else {
             Write-Warning "$($prereq.Value) is not installed!"
@@ -116,15 +151,80 @@ function Show-Environment-Info {
 try {
     Write-Host "🚀 Creating Development Environment" -ForegroundColor Cyan
     
-    Check-Prerequisites
-    Initialize-DevCluster
-    Build-PushImages
-    Deploy-Infrastructure
-    Deploy-Applications
-    Show-Environment-Info
+    # Get current state
+    $currentState = Get-SetupState
     
+    if ($Reset) {
+        Reset-SetupState
+        $currentState = "init"
+        Write-Host "Reset setup state. Starting fresh." -ForegroundColor Yellow
+    }
+    
+    # Define the steps
+    $steps = @(
+        @{
+            Name = "prerequisites"
+            Action = { Test-Prerequisites }
+            Desc = "Checking prerequisites"
+        },
+        @{
+            Name = "cluster"
+            Action = { Initialize-DevCluster }
+            Desc = "Setting up KinD cluster"
+        },
+        @{
+            Name = "images"
+            Action = { Build-PushImages }
+            Desc = "Building and pushing images"
+        },
+        @{
+            Name = "infrastructure"
+            Action = { Deploy-Infrastructure }
+            Desc = "Deploying infrastructure"
+        },
+        @{
+            Name = "applications"
+            Action = { Deploy-Applications }
+            Desc = "Deploying applications"
+        }
+    )
+    
+    # Determine start index
+    $startIndex = 0
+    
+    if ($PSBoundParameters.ContainsKey('Step')) {
+        $stepNames = $steps | ForEach-Object { $_.Name }
+        $startIndex = [array]::IndexOf($stepNames, $Step)
+        if ($startIndex -ge 0) {
+            Write-Host "Starting from $($steps[$startIndex].Desc)" -ForegroundColor Yellow
+        }
+    } elseif ($Continue -and $currentState -ne "init") {
+        $stepNames = $steps | ForEach-Object { $_.Name }
+        $continueIndex = [array]::IndexOf($stepNames, $currentState)
+        if ($continueIndex -ge 0) {
+            $startIndex = $continueIndex + 1
+            if ($startIndex -lt $steps.Count) {
+                Write-Host "Continuing from $($steps[$startIndex].Desc)" -ForegroundColor Yellow
+            }
+        }
+    }
+    
+    # Execute steps
+    for ($i = $startIndex; $i -lt $steps.Count; $i++) {
+        $step = $steps[$i]
+        & $step.Action
+        Update-SetupState $step.Name
+    }
+    
+    Show-Environment-Info
+    Update-SetupState "complete"
     Write-Success "Development environment is ready!"
+    
 } catch {
     Write-Warning "Failed to create development environment: $_"
+    Write-Host "`nTo continue from this point later, run:"
+    Write-Host "    .\create-dev-env.ps1 -Continue"
+    Write-Host "To start fresh:"
+    Write-Host "    .\create-dev-env.ps1 -Reset"
     exit 1
 }

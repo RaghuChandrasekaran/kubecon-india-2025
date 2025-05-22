@@ -15,6 +15,17 @@ spec:
       - name: users
         image: users:latest
         imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            configMapKeyRef:
+              name: users-configmap
+              key: MONGO_URI
+        - name: DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: users-configmap
+              key: DATABASE
         ports:
         - name: http
           containerPort: 9090

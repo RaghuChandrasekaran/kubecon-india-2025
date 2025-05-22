@@ -24,6 +24,6 @@ async def update_user(user_id: int, name: Optional[str] = None, email: Optional[
 async def get_user(user_id: int, user_dal: UserDAL = Depends(get_user_dal)):
     return await user_dal.get_user(user_id)
 
-@router.get("/users")
+@router.get("/users", response_model=None)
 async def get_all_users(user_dal: UserDAL = Depends(get_user_dal)) -> List[User]:
     return await user_dal.get_all_users()
