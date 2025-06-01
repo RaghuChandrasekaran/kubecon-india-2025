@@ -1,19 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: e-commerce
-
 resources:
-  - ../../../base/products
-
-patchesStrategicMerge:
-  - deployment-patch.yaml
-  - service-nodeport.yaml
-
+- ../../../base/products
 configMapGenerator:
-  - name: products-configmap
-    behavior: create
-    literals: 
-    - MONGO_URI=mongodb://mongo-root-username:mongo-root-password@mongo-service.shared-services.svc.cluster.local:27017/
-    - DATABASE=e-commerce
+- behavior: create
+  literals:
+  - MONGO_URI=mongodb://mongo-root-username:mongo-root-password@mongo-service.shared-services.svc.cluster.local:27017/
+  - DATABASE=e-commerce
+  name: products-configmap
 generatorOptions:
-  disableNameSuffixHash: true # use a static name
+  disableNameSuffixHash: true
+patches:
+- path: deployment-patch.yaml
+- path: service-nodeport.yaml

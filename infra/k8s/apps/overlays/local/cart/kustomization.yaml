@@ -1,20 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: e-commerce
-
 resources:
-  - ../../../base/cart
-
-patchesStrategicMerge:
-  - deployment-patch.yaml
-  - service-nodeport.yaml
-
+- ../../../base/cart
 configMapGenerator:
-  - name: cart-configmap
-    behavior: create
-    literals: 
-    - SPRING_REDIS_HOST=redis-service.shared-services.svc.cluster.local
-    - SPRING_REDIS_PORT=6379
-    - SPRING_REDIS_PASSWORD=
+- behavior: create
+  literals:
+  - SPRING_REDIS_HOST=redis-service.shared-services.svc.cluster.local
+  - SPRING_REDIS_PORT=6379
+  - SPRING_REDIS_PASSWORD=
+  name: cart-configmap
 generatorOptions:
-  disableNameSuffixHash: true # use a static name
+  disableNameSuffixHash: true
+patches:
+- path: deployment-patch.yaml
+- path: service-nodeport.yaml
