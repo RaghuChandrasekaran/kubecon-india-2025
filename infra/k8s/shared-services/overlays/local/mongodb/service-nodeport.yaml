@@ -9,4 +9,5 @@ spec:
     port: 27017
     targetPort: 27017
     nodePort: 32017
-
+  selector:
+    app: mongo-deployment

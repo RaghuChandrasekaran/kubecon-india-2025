@@ -9,4 +9,6 @@ spec:
     port: 6379
     targetPort: 6379
     nodePort: 32379
+  selector:
+    app: redis-deployment
 
