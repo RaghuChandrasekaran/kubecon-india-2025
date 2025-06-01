@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: e-commerce
 resources:
 - ../../../base/products
+- service-nodeport.yaml
 configMapGenerator:
 - behavior: create
   literals:
@@ -13,4 +14,3 @@ generatorOptions:
   disableNameSuffixHash: true
 patches:
 - path: deployment-patch.yaml
-- path: service-nodeport.yaml

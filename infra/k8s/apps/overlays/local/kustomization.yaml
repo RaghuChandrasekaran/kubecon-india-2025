@@ -1,29 +1,33 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-  - ../../base
+- ../../base
+- cart
+- products
+- search
+- store-ui
+- users
 
 images:
-  - name: cart
-    newName: localhost:5001/cart
-    newTag: latest
-  - name: products
-    newName: localhost:5001/products
-    newTag: latest
-  - name: search
-    newName: localhost:5001/search
-    newTag: latest
-  - name: store-ui
-    newName: localhost:5001/store-ui
-    newTag: latest
-  - name: users
-    newName: localhost:5001/users
-    newTag: latest
-
+- name: cart
+  newName: localhost:5001/cart
+  newTag: latest
+- name: products
+  newName: localhost:5001/products
+  newTag: latest
+- name: search
+  newName: localhost:5001/search
+  newTag: latest
+- name: store-ui
+  newName: localhost:5001/store-ui
+  newTag: latest
+- name: users
+  newName: localhost:5001/users
+  newTag: latest
 # ConfigMap for local environment specific settings
+
 configMapGenerator:
-  - name: app-env
-    behavior: merge
-    literals:
-      - REGISTRY_URL=localhost:5001
+- behavior: merge
+  literals:
+  - REGISTRY_URL=localhost:5001
+  name: app-env

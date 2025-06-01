@@ -3,11 +3,6 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
-  - cart
-  - products
-  - search
-  - store-ui
-  - users
 
 # Base ConfigMap that will be merged with overlays
 configMapGenerator:
