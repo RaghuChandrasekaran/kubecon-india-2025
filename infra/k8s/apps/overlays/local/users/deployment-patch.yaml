@@ -7,5 +7,5 @@ spec:
     spec:
       containers:
       - name: users
-        image: localhost:5001/users:latest
+        image: image.registry.local:5001/users:latest
         imagePullPolicy: Always

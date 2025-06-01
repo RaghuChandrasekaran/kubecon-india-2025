@@ -15,7 +15,7 @@ This project supports both local development using KinD (Kubernetes in Docker) a
 
 ```powershell
 # Run setup-kind.ps1 to create:
-# - Local registry at localhost:5001
+# - Local registry at image.registry.local:5001
 # - KinD cluster with registry access
 ./setup-kind.ps1
 ```
@@ -43,7 +43,7 @@ kubectl apply -k k8s/apps/overlays/local
 
 ### Registry Configuration
 
-The default container registry is `localhost:5001`. You can customize this by:
+The default container registry is `image.registry.local:5001`. You can customize this by:
 
 1. Updating `REGISTRY_URL` in `build-and-push-images.ps1`
 2. Updating image references in Kustomize overlays

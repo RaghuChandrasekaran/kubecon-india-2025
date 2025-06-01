@@ -7,4 +7,4 @@ spec:
     spec:
       containers:
       - name: search
-        image: localhost:5001/search:latest
+        image: image.registry.local:5001/search:latest

@@ -8,7 +8,7 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 80
-    nodePort: 32080
+    nodePort: 30084
   selector:
     app: store-ui-deployment
     

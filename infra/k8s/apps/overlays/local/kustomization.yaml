@@ -7,27 +7,28 @@ resources:
 - search
 - store-ui
 - users
+- ingress
 
 images:
 - name: cart
-  newName: localhost:5001/cart
+  newName: image.registry.local:5001/cart
   newTag: latest
 - name: products
-  newName: localhost:5001/products
+  newName: image.registry.local:5001/products
   newTag: latest
 - name: search
-  newName: localhost:5001/search
+  newName: image.registry.local:5001/search
   newTag: latest
 - name: store-ui
-  newName: localhost:5001/store-ui
+  newName: image.registry.local:5001/store-ui
   newTag: latest
 - name: users
-  newName: localhost:5001/users
+  newName: image.registry.local:5001/users
   newTag: latest
 # ConfigMap for local environment specific settings
 
 configMapGenerator:
 - behavior: merge
   literals:
-  - REGISTRY_URL=localhost:5001
+  - REGISTRY_URL=image.registry.local:5001
   name: app-env

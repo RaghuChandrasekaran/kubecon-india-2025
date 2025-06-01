@@ -25,7 +25,7 @@ function Write-Warning {
 }
 
 # Configuration - Can be overridden by environment variables
-$registryUrl = if ($env:REGISTRY_URL) { $env:REGISTRY_URL } else { "localhost:5001" }
+$registryUrl = if ($env:REGISTRY_URL) { $env:REGISTRY_URL } else { "image.registry.local:5001" }
 $services = @(
     @{
         Name = "cart"

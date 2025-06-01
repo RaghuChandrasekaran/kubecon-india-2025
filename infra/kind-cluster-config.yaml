@@ -3,7 +3,6 @@ apiVersion: kind.x-k8s.io/v1alpha4
 name: e-commerce-cluster
 
 networking:
-  ipFamily: dual
   apiServerAddress: "127.0.0.1"
 
 nodes:
@@ -17,7 +16,7 @@ nodes:
       kubeletExtraArgs:
         node-labels: "ingress-ready=true"
   extraPortMappings:
-    # Store UI
+    # Store UI            # Ingress
     - containerPort: 80
       hostPort: 80
       protocol: TCP
@@ -25,29 +24,29 @@ nodes:
       hostPort: 443
       protocol: TCP
     # Backend Services
-    - containerPort: 30080
+    - containerPort: 30080 # cart service
       hostPort: 8080
       protocol: TCP
-    - containerPort: 30081
+    - containerPort: 30081 # product service
       hostPort: 8081
       protocol: TCP
-    - containerPort: 30082
+    - containerPort: 30082  # search service
       hostPort: 8082
       protocol: TCP
-    - containerPort: 30083
+    - containerPort: 30083  # users service
       hostPort: 8083
       protocol: TCP
-    - containerPort: 30084
+    - containerPort: 30084  # store UI service
       hostPort: 8084
       protocol: TCP
     # DB services
-    - containerPort: 27017
+    - containerPort: 27017  # MongoDB
       hostPort: 27017
       protocol: TCP
-    - containerPort: 6379
+    - containerPort: 6379   # Redis
       hostPort: 6379
       protocol: TCP
-    - containerPort: 9200
+    - containerPort: 9200   # Elasticsearch
       hostPort: 9200
       protocol: TCP
 
@@ -62,7 +61,11 @@ containerdConfigPatches:
       endpoint = ["https://registry-1.docker.io"]
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
       endpoint = ["http://kind-registry:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."image.registry.local"]
+      endpoint = ["http://kind-registry:5000"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs]
     [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001"]
       [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001".tls]
+        insecure_skip_verify = true
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."image.registry.local".tls]
         insecure_skip_verify = true

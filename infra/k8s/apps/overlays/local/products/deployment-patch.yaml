@@ -7,4 +7,4 @@ spec:
     spec:
       containers:
       - name: products
-        image: localhost:5001/products:latest
+        image: image.registry.local:5001/products:latest
