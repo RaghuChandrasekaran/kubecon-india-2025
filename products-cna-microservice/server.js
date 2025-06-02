@@ -1,10 +1,14 @@
 // Loads the configuration from config.env to process.env
 require('dotenv').config({ path: './.env' });
+
 const deals = require('./data/deals')
 const products = require('./data/products')
 
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const specs = require('./swagger');
+
 // get MongoDB driver connection
 const dbo = require('./db/conn');
 
@@ -13,6 +17,10 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Swagger UI setup
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 app.use(require('./routes/record'));
 
 // Global error handling
