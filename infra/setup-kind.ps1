@@ -254,7 +254,7 @@ Write-Phase "Configuring Registry Access"
 
 Write-Step "Setting up registry access in cluster nodes..."
 $timer = Start-Timer
-$regHostDir = "/etc/containerd/certs.d/localhost:$regPort"
+$regHostDir = "/etc/containerd/certs.d/image.registry.local:$regPort"
 
 # Verify cluster is ready before proceeding
 Write-Host "   → Waiting for cluster to be ready..."
@@ -345,7 +345,7 @@ metadata:
   namespace: kube-public
 data:
   localRegistryHosting.v1: |
-    host: "localhost:$regPort"
+    host: "image.registry.local:$regPort"
     help: "https://kind.sigs.k8s.io/docs/user/local-registry/"
 "@
     
@@ -376,17 +376,17 @@ Write-Host @"
 
 🔸 Environment Details:
    • Cluster Name: $clusterName
-   • Local Registry: localhost:$regPort
+   • Local Registry: image.registry.local:$regPort
    • Config Path: $kindConfigPath
 
 🔸 Verify Setup:
    • Check nodes:    kubectl get nodes
    • Check system:   kubectl get pods -A
-   • Check registry: curl http://localhost:$regPort/v2/_catalog
+   • Check registry: curl http://image.registry.local:$regPort/v2/_catalog
 
 🔸 Quick Start:
-   1. Tag an image:     docker tag myimage:latest localhost:$regPort/myimage:latest
-   2. Push to registry: docker push localhost:$regPort/myimage:latest
+   1. Tag an image:     docker tag myimage:latest image.registry.local:$regPort/myimage:latest
+   2. Push to registry: docker push image.registry.local:$regPort/myimage:latest
    3. Deploy to K8s:    kubectl apply -f your-deployment.yaml
 
 🔸 Documentation:
