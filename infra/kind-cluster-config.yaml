@@ -40,13 +40,13 @@ nodes:
       hostPort: 8084
       protocol: TCP
     # DB services
-    - containerPort: 27017  # MongoDB
+    - containerPort: 32017  # MongoDB
       hostPort: 27017
       protocol: TCP
-    - containerPort: 6379   # Redis
+    - containerPort: 32379   # Redis
       hostPort: 6379
       protocol: TCP
-    - containerPort: 9200   # Elasticsearch
+    - containerPort: 32300   # Elasticsearch
       hostPort: 9200
       protocol: TCP
 
