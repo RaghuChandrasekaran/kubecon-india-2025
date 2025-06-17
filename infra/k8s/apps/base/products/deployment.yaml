@@ -14,7 +14,7 @@ spec:
       containers:
       - name: products
         image: products:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: MONGO_URI  ## Define the name of the variable
           valueFrom:

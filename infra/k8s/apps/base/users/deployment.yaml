@@ -14,7 +14,7 @@ spec:
       containers:
       - name: users
         image: users:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: MONGO_URI
           valueFrom:

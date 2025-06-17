@@ -14,7 +14,7 @@ spec:
       containers:
       - name: search
         image: search:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: ELASTIC_URL  ## Define the name of the variable
           valueFrom:
