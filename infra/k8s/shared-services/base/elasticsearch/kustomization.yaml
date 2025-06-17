@@ -4,3 +4,5 @@ namespace: shared-services
 resources:
 - deployment.yaml
 - service.yaml
+- kibana-deployment.yaml
+- kibana-service.yaml

@@ -4,3 +4,4 @@ namespace: shared-services
 resources:
 - ../../../base/elasticsearch
 - service-nodeport.yaml
+- kibana-service-nodeport.yaml

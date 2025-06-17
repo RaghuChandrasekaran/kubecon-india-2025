@@ -49,6 +49,9 @@ nodes:
     - containerPort: 32300   # Elasticsearch
       hostPort: 9200
       protocol: TCP
+    - containerPort: 32601   # Kibana
+      hostPort: 5601
+      protocol: TCP
 
 # Registry configuration
 containerdConfigPatches:

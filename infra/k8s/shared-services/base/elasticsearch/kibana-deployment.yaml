@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana-deployment
+spec:
+  selector:
+    matchLabels:
+      app: kibana-deployment
+  template:
+    metadata:
+      labels:
+        app: kibana-deployment
+    spec:
+      containers:
+      - name: kibana
+        image: kibana:8.2.3
+        ports:
+        - containerPort: 5601
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://es-service:9200"
