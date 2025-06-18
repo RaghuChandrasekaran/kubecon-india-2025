@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useParams } from "react-router-dom";
 import getProductByVariantSku from "../../api/products"
-import addToCart from "../../api/cart"
+import {addToCart} from "../../api/cart"
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
