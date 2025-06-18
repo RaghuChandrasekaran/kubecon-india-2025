@@ -10,7 +10,7 @@ axiosClient.defaults.headers.common = {
 //All request will wait 2 seconds before timeout
 axiosClient.defaults.timeout = 2000;
 
-export const productsUrl = process.env.REACT_APP_PRODCUTS_URL_BASE
+export const productsUrl = process.env.REACT_APP_PRODUCTS_URL_BASE
 export const cartUrl = process.env.REACT_APP_CART_URL_BASE
 
 export default axiosClient
