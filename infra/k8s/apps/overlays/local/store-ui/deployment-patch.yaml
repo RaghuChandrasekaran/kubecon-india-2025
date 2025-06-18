@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-ui-deployment
+spec:
+  template:
+    spec:
+      containers:
+      - name: store-ui
+        image: image.registry.local:5001/store-ui:latest
+        imagePullPolicy: Always
+        env:
+        - name: REACT_APP_PRODUCTS_URL_BASE
+          valueFrom:
+            configMapKeyRef:
+              name: store-ui-configmap
+              key: REACT_APP_PRODUCTS_URL_BASE
+        - name: REACT_APP_CART_URL_BASE
+          valueFrom:
+            configMapKeyRef:
+              name: store-ui-configmap
+              key: REACT_APP_CART_URL_BASE

@@ -33,3 +33,14 @@ ARG APP_BUILD_DIR=/src/app
 # SET default APP_BUILD_DIR path
 ARG APP_SERVE_DIR=/store-ui
 COPY --from=build-step $APP_BUILD_DIR/build $APP_SERVE_DIR
+
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Add a reference to the config.js in the index.html
+RUN sed -i 's/<head>/<head><script src="\/config.js"><\/script>/' $APP_SERVE_DIR/index.html
+
+# Use our entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
