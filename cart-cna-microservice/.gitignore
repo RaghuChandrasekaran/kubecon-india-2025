@@ -22,3 +22,4 @@
 
 # IDE Files
 .vscode
+gradle/*
