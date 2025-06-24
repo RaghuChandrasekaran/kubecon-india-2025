@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import { useCart } from '../../components/layout/CartContext';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -138,7 +139,14 @@ const Cart = () => {
                             <Grid item xs={6}>
                                 <Typography variant="h6">Total: ${calculateTotal().toFixed(2)}</Typography>
                             </Grid>
-                            <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                                <Button 
+                                    variant="outlined" 
+                                    startIcon={<ShoppingBagIcon />}
+                                    onClick={() => navigate('/')}
+                                >
+                                    Continue Shopping
+                                </Button>
                                 <Button 
                                     variant="contained" 
                                     startIcon={<PaidIcon />}

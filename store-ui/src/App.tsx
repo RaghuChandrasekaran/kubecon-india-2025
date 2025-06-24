@@ -6,22 +6,31 @@ import Checkout from './pages/Checkout/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation/OrderConfirmation'
 import UserPage from './pages/User/UserPage'
 import UserListPage from './pages/User/UserListPage'
+import { LoginPage, RegisterPage, ProfilePage } from './pages/Auth'
+import { AdminDashboard } from './pages/Admin'
 import Layout from './components/layout/Layout'
+import { AuthProvider } from './contexts/AuthContext'
 
 const App = (props: any) => {
     return (
-        <Layout>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/product/:id" element={<Product />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                <Route path="/users" element={<UserListPage />} />
-                <Route path="/user/new" element={<UserPage />} />
-                <Route path="/user/:id" element={<UserPage />} />
-            </Routes>
-        </Layout>
+        <AuthProvider>
+            <Layout>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/product/:id" element={<Product />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                    <Route path="/users" element={<UserListPage />} />
+                    <Route path="/user/new" element={<UserPage />} />
+                    <Route path="/user/:id" element={<UserPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                </Routes>
+            </Layout>
+        </AuthProvider>
     )
 }
 export default App

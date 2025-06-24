@@ -1,10 +1,16 @@
 import axiosClient, { cartUrl } from "./config"
+import { getCachedUser } from "./users";
 
-const CUSTOMER_ID = "john@example.com";
+// Helper function to get the current user's ID (email) for cart operations
+const getCurrentCustomerId = () => {
+  const user = getCachedUser();
+  return user?.email || localStorage.getItem('guest_user_id') || 'guest-user';
+};
 
 export const getCart = async () => {
     try {
-        const response = await axiosClient.get(`${cartUrl}cart/${CUSTOMER_ID}`);
+        const customerId = getCurrentCustomerId();
+        const response = await axiosClient.get(`${cartUrl}cart/${customerId}`);
         return response.data;
     } catch (err: any) {
         console.log(err);
@@ -16,8 +22,10 @@ export const addToCart = async (item: any) => {
     try {
         // Get current cart
         let cart = await getCart();
+        const customerId = getCurrentCustomerId();
+        
         if (!cart || !cart.items) {
-            cart = { customerId: CUSTOMER_ID, items: [] };
+            cart = { customerId, items: [] };
         }
         // Check if item exists
         const idx = cart.items.findIndex((i: any) => i.productId === item.productId);
