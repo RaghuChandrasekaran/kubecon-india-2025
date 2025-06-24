@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PersonIcon from '@mui/icons-material/Person';
 import Badge from '@mui/material/Badge';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../layout/CartContext';
@@ -19,6 +20,10 @@ const AppBar = () => {
     const { cartCount } = useCart();
     const theme = useTheme();
     const colorMode = React.useContext(ThemeContext);
+    
+    useEffect(() => {
+        console.log("AppBar loaded with user icon - version 2");
+    }, []);
 
     return (
         <Box sx={{ flexGrow: 1 }}>
@@ -49,6 +54,14 @@ const AppBar = () => {
                         <Badge badgeContent={cartCount} color="error">
                             <ShoppingCartIcon />
                         </Badge>
+                    </IconButton>
+                    <IconButton
+                        size="large"
+                        edge="start"
+                        color="inherit"
+                        onClick={() => navigate('/users')}
+                    >
+                        <PersonIcon />
                     </IconButton>
                     <Button color="inherit" onClick={() => navigate('/login')}>Login</Button>
                 </Toolbar>
