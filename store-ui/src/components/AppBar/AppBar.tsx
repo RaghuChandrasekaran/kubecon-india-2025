@@ -197,6 +197,12 @@ const AppBar = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const colorMode = React.useContext(ThemeContext);
   
+  // Debug logging for admin role
+  console.log("AppBar - User object:", user);
+  console.log("AppBar - User role:", user?.role);
+  console.log("AppBar - Is admin check:", user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin');
+  console.log("AppBar - Is logged in:", isLoggedIn);
+  
   // Profile menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -385,7 +391,7 @@ const AppBar = () => {
                 </ListItemButton>
               </ListItem>
               
-              {user?.role === 'admin' && (
+              {user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin' ? (
                 <ListItem disablePadding>
                   <ListItemButton onClick={() => handleNavigation('/admin')}>
                     <ListItemIcon>
@@ -394,7 +400,7 @@ const AppBar = () => {
                     <ListItemText primary="Admin Dashboard" />
                   </ListItemButton>
                 </ListItem>
-              )}
+              ) : null}
               
               <ListItem disablePadding>
                 <ListItemButton onClick={handleLogout}>
@@ -591,6 +597,19 @@ const AppBar = () => {
                 </Tooltip>
               )}
               
+              {/* Admin Users Icon - Only visible to admin users */}
+              {isLoggedIn && (user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin') && (
+                <Tooltip title="User Management">
+                  <IconButton 
+                    color="inherit" 
+                    onClick={() => navigate('/users')}
+                    sx={{ mr: 1 }}
+                  >
+                    <AdminPanelSettings />
+                  </IconButton>
+                </Tooltip>
+              )}
+              
               <Tooltip title="Wishlist">
                 <IconButton color="inherit" onClick={() => navigate('/wishlist')}>
                   <FavoriteIcon />
@@ -684,14 +703,14 @@ const AppBar = () => {
                       </ListItemIcon>
                       <ListItemText primary="My Orders" />
                     </MenuItem>
-                    {user?.role === 'admin' && (
+                    {user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin' ? (
                       <MenuItem onClick={() => navigate('/admin')} sx={{ py: 1.5 }}>
                         <ListItemIcon>
                           <AdminPanelSettings fontSize="small" />
                         </ListItemIcon>
                         <ListItemText primary="Admin Dashboard" />
                       </MenuItem>
-                    )}
+                    ) : null}
                     <MenuItem onClick={() => navigate('/settings')} sx={{ py: 1.5 }}>
                       <ListItemIcon>
                         <Settings fontSize="small" />

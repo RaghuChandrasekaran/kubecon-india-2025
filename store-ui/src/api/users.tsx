@@ -87,10 +87,20 @@ export const getCurrentUser = async (): Promise<User> => {
       }
     });
     
-    // Cache user in localStorage
-    localStorage.setItem(USER_KEY, JSON.stringify(response.data));
+    console.log('Raw user data from API:', response.data); // Log raw data
     
-    return response.data;
+    // Ensure role is properly normalized to lowercase
+    const userData = {
+      ...response.data,
+      role: response.data.role ? response.data.role.toLowerCase() : null
+    };
+    
+    console.log('Processed user data with role:', userData); // Log processed data with role
+    
+    // Cache user in localStorage
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    
+    return userData;
   } catch (err: any) {
     console.error("Error fetching current user:", err);
     throw err;
@@ -117,7 +127,32 @@ export const isAuthenticated = (): boolean => {
  */
 export const getCachedUser = (): User | null => {
   const userData = localStorage.getItem(USER_KEY);
-  return userData ? JSON.parse(userData) : null;
+  if (!userData) {
+    console.log('No cached user data found in localStorage');
+    return null;
+  }
+  
+  try {
+    const parsedUser = JSON.parse(userData);
+    console.log('Raw cached user data:', parsedUser);
+    
+    // Ensure role is properly normalized
+    if (parsedUser.role) {
+      console.log('Original role value:', parsedUser.role);
+      parsedUser.role = parsedUser.role.toLowerCase();
+      console.log('Normalized role value:', parsedUser.role);
+    } else {
+      console.log('No role found in cached user data');
+    }
+    
+    console.log('Final cached user data:', parsedUser);
+    return parsedUser;
+  } catch (error) {
+    console.error('Error parsing cached user data:', error);
+    // If there's an error parsing, clear the cache and return null
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
 };
 
 /**
