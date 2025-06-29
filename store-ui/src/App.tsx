@@ -10,6 +10,7 @@ import { LoginPage, RegisterPage, ProfilePage } from './pages/Auth'
 import { AdminDashboard } from './pages/Admin'
 import Layout from './components/layout/Layout'
 import { AuthProvider } from './contexts/AuthContext'
+import SearchComponent from './components/SearchComponent'
 
 const App = (props: any) => {
     return (
@@ -17,6 +18,7 @@ const App = (props: any) => {
             <Layout>
                 <Routes>
                     <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<SearchComponent />} />
                     <Route path="/product/:id" element={<Product />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />

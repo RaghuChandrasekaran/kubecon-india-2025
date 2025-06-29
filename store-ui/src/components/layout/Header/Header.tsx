@@ -68,6 +68,7 @@ const Header = () => {
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [currentTab, setCurrentTab] = useState(0);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const categories = [
         { name: 'Top Offers', path: '/' },
@@ -87,6 +88,16 @@ const Header = () => {
 
     const toggleMobileMenu = () => {
         setMobileMenuOpen(!mobileMenuOpen);
+    };
+
+    const handleSearch = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter' && searchQuery.trim()) {
+            navigate(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchQuery(event.target.value);
     };
 
     return (
@@ -137,6 +148,9 @@ const Header = () => {
                                 <StyledInputBase
                                     placeholder="Search products…"
                                     inputProps={{ 'aria-label': 'search' }}
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                    onKeyPress={handleSearch}
                                 />
                             </Search>
                         )}
@@ -228,6 +242,9 @@ const Header = () => {
                                     placeholder="Search products…"
                                     inputProps={{ 'aria-label': 'search' }}
                                     sx={{ width: '100%' }}
+                                    value={searchQuery}
+                                    onChange={handleSearchChange}
+                                    onKeyPress={handleSearch}
                                 />
                             </Search>
                         </ListItem>

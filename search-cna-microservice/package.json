@@ -9,6 +9,7 @@
     "format": "prettier --single-quote --check ."
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.8.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "dotenv-expand": "^8.0.3",
