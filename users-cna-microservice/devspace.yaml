@@ -1,0 +1,51 @@
+version: v2beta1
+name: devspace
+
+images:
+  users:
+    image: image.registry.local:5001/users
+    dockerfile: ./Dockerfile
+    tags:
+    - latest
+
+deployments:
+  users:
+    kubectl:
+      manifests:
+        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/users/
+      kustomize: true
+
+dev:
+  users:
+    labelSelector:
+      app: users-deployment
+    container: users
+    devImage: ghcr.io/loft-sh/devspace-containers/python:3-alpine
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - .devspace/
+          - __pycache__/
+          - "*.pyc"
+          - .pytest_cache/
+          - .git/
+        initialSync: preferLocal
+        printLogs: true
+    terminal:
+      command: ./devspace_start.sh
+    ssh:
+      enabled: true
+    proxyCommands:
+      - command: devspace
+      - command: kubectl
+      - command: helm
+      - gitCredentials: true
+    ports:
+      - port: "9090"
+    open:
+      - url: http://localhost:9090/docs
+    env:
+      - name: PYTHONPATH
+        value: "/app"
+      - name: ENVIRONMENT
+        value: "development"
