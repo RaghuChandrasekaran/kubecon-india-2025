@@ -1,0 +1,60 @@
+version: v2beta1
+name: devspace
+
+images:
+  app:
+    image: image.registry.local:5001/cart
+    dockerfile: ./Dockerfile
+    tags:
+    - latest
+
+deployments:
+  app:
+    kubectl:
+      manifests:
+        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/cart/
+      kustomize: true
+
+dev:
+  app:
+    labelSelector:
+      app: cart-deployment
+    container: cart
+    devImage: ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
+    sync:
+      - excludePaths:
+          - .git/
+        uploadExcludePaths:
+          - Dockerfile
+          - target/
+        printLogs: true
+    terminal:
+      command: ./devspace_start.sh
+    ssh:
+      enabled: true
+    proxyCommands:
+      - command: devspace
+      - command: kubectl
+      - command: helm
+      - gitCredentials: true
+    ports:
+      - port: "7000:7000"
+    open:
+      - url: http://localhost:7000/swagger-ui.html
+    env:
+      - name: SERVER_PORT
+        value: "7000"
+      - name: APP_ENVIRONMENT
+        value: "development"
+      - name: LOG_LEVEL_ROOT
+        value: "INFO"
+
+commands:
+  start:
+    command: devspace enter app -- ./gradlew bootRun
+  build:
+    command: devspace enter app -- ./gradlew build
+  test:
+    command: devspace enter app -- ./gradlew test
+  clean:
+    command: devspace enter app -- ./gradlew clean

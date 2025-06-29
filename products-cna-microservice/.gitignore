@@ -1,2 +1,6 @@
 node_modules
 .env
+
+
+# Ignore DevSpace cache and log folder
+.devspace/

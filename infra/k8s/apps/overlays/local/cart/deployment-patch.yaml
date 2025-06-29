@@ -8,3 +8,20 @@ spec:
       containers:
       - name: cart
         image: image.registry.local:5001/cart:latest
+        ports:
+        - name: http
+          containerPort: 7000
+          protocol: TCP
+        env:
+        - name: SERVER_PORT
+          value: "7000"
+        - name: APP_ENVIRONMENT
+          value: "development"
+        - name: LOG_LEVEL_ROOT
+          value: "DEBUG"
+        - name: LOG_LEVEL_APP
+          value: "DEBUG"
+        - name: SWAGGER_UI_ENABLED
+          value: "true"
+        - name: MANAGEMENT_HEALTH_SHOW_DETAILS
+          value: "always"

@@ -15,23 +15,33 @@ spec:
       - name: cart
         image: cart:latest
         imagePullPolicy: Always
-        env:
-        - name: SPRING_REDIS_HOST  ## Define the name of the variable
-          valueFrom:
-            configMapKeyRef:
-              name: cart-configmap   ## This must match the name of the configmap
-              key: SPRING_REDIS_HOST  ## The key to fetch
-        - name: SPRING_REDIS_PASSWORD  ## Define the name of the variable
-          valueFrom:
-            configMapKeyRef:
-              name: cart-configmap   ## This must match the name of the configmap
-              key: SPRING_REDIS_PASSWORD  ## The key to fetch
-        - name: SPRING_REDIS_PORT  ## Define the name of the variable
-          valueFrom:
-            configMapKeyRef:
-              name: cart-configmap   ## This must match the name of the configmap
-              key: SPRING_REDIS_PORT  ## The key to fetch
         ports:
         - name: http
-          containerPort: 8080
+          containerPort: 7000
           protocol: TCP
+        env:
+        - name: SERVER_PORT
+          value: "7000"
+        - name: SPRING_REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: cart-configmap
+              key: SPRING_REDIS_HOST
+        - name: SPRING_REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: cart-configmap
+              key: SPRING_REDIS_PORT
+        - name: SPRING_REDIS_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: cart-configmap
+              key: SPRING_REDIS_PASSWORD
+        - name: APP_ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL_ROOT
+          value: "WARN"
+        - name: LOG_LEVEL_APP
+          value: "INFO"
+        - name: MANAGEMENT_HEALTH_SHOW_DETAILS
+          value: "never"

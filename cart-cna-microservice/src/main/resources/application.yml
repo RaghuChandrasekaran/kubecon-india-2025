@@ -1,17 +1,54 @@
 spring:
   redis:
-    host: ${SPRING_REDIS_HOST}
-    port: ${SPRING_REDIS_PORT}
-    password: ${SPRING_REDIS_PASSWORD}
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:}
+    timeout: ${SPRING_REDIS_TIMEOUT:2000ms}
+    lettuce:
+      pool:
+        max-active: ${SPRING_REDIS_POOL_MAX_ACTIVE:8}
+        max-idle: ${SPRING_REDIS_POOL_MAX_IDLE:8}
+        min-idle: ${SPRING_REDIS_POOL_MIN_IDLE:0}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:7000}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/}
+  compression:
+    enabled: ${SERVER_COMPRESSION_ENABLED:true}
+
+# Logging Configuration
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.example.cart: ${LOG_LEVEL_APP:INFO}
+  pattern:
+    console: ${LOG_PATTERN_CONSOLE:%d{yyyy-MM-dd HH:mm:ss} - %msg%n}
+
+# Management/Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS:health,info,metrics}
+      base-path: ${MANAGEMENT_BASE_PATH:/actuator}
+  endpoint:
+    health:
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:when_authorized}
 
 # Swagger/OpenAPI Configuration
 springdoc:
   swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
-    tagsSorter: alpha
+    path: ${SWAGGER_UI_PATH:/swagger-ui.html}
+    operationsSorter: ${SWAGGER_OPERATIONS_SORTER:method}
+    tagsSorter: ${SWAGGER_TAGS_SORTER:alpha}
+    enabled: ${SWAGGER_UI_ENABLED:true}
   api-docs:
-    path: /api-docs
+    path: ${SWAGGER_API_DOCS_PATH:/api-docs}
+    enabled: ${SWAGGER_API_DOCS_ENABLED:true}
+
+# Application Configuration
+app:
+  name: ${APP_NAME:cart-service}
+  version: ${APP_VERSION:1.0.0}
+  environment: ${APP_ENVIRONMENT:development}

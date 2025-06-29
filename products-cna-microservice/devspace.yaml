@@ -1,0 +1,40 @@
+version: v2beta1
+name: devspace
+
+images:
+  products:
+    image: image.registry.local:5001/products
+    dockerfile: ./Dockerfile
+    tags:
+    - latest
+
+deployments:
+  products:
+    kubectl:
+      manifests:
+        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/products/
+      kustomize: true
+
+dev:
+  products:
+    labelSelector:
+      app: products-deployment
+    container: products
+    devImage: ghcr.io/loft-sh/devspace-containers/javascript:18-alpine
+    # Sync files between the local filesystem and the development container
+    sync:
+      - path: ./
+        uploadExcludeFile: .dockerignore
+    terminal:
+      command: ./devspace_start.sh
+    ssh:
+      enabled: true
+    proxyCommands:
+      - command: devspace
+      - command: kubectl
+      - command: helm
+      - gitCredentials: true
+    ports:
+      - port: "5000"
+    open:
+      - url: http://localhost:5000/api-docs
