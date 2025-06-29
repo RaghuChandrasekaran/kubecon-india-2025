@@ -1,0 +1,61 @@
+version: v2beta1
+name: store-ui
+
+images:
+  store-ui:
+    image: image.registry.local:5001/store-ui
+    dockerfile: ./Dockerfile
+
+deployments:
+  store-ui:
+    kubectl:
+      manifests:
+        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/store-ui/
+      kustomize: true
+
+dev:
+  store-ui:
+    labelSelector:
+      app: store-ui-deployment
+    container: store-ui
+    devImage: ghcr.io/loft-sh/devspace-containers/typescript:18-alpine
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - .devspace/
+          - node_modules/
+          - build/
+          - .git/
+          - "*.log"
+          - package-lock.json
+          - yarn.lock
+        initialSync: preferLocal
+        printLogs: true
+    terminal:
+      command: ./devspace_start.sh
+    ports:
+      - port: "3000"
+    open:
+      - url: http://localhost:3000
+    env:
+      - name: NODE_ENV
+        value: "development"
+      - name: REACT_APP_CART_URL_BASE
+        value: "http://localhost:8080/"
+      - name: REACT_APP_PRODUCTS_URL_BASE
+        value: "http://localhost:8081/"
+      - name: REACT_APP_SEARCH_URL_BASE
+        value: "http://localhost:8082/"
+      - name: REACT_APP_USERS_URL_BASE
+        value: "http://localhost:8083/"
+
+
+commands:
+  start:
+    command: devspace enter store-ui -- npm start
+  build:
+    command: devspace enter store-ui -- npm run build
+  test:
+    command: devspace enter store-ui -- npm test
+  install:
+    command: devspace enter store-ui -- npm install

@@ -1,22 +1,22 @@
 version: v2beta1
-name: devspace
+name: cart
 
 images:
-  app:
+  cart:
     image: image.registry.local:5001/cart
     dockerfile: ./Dockerfile
     tags:
     - latest
 
 deployments:
-  app:
+  cart:
     kubectl:
       manifests:
         - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/cart/
       kustomize: true
 
 dev:
-  app:
+  cart:
     labelSelector:
       app: cart-deployment
     container: cart
@@ -51,10 +51,10 @@ dev:
 
 commands:
   start:
-    command: devspace enter app -- ./gradlew bootRun
+    command: devspace enter cart -- ./gradlew bootRun
   build:
-    command: devspace enter app -- ./gradlew build
+    command: devspace enter cart -- ./gradlew build
   test:
-    command: devspace enter app -- ./gradlew test
+    command: devspace enter cart -- ./gradlew test
   clean:
-    command: devspace enter app -- ./gradlew clean
+    command: devspace enter cart -- ./gradlew clean

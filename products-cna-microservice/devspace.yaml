@@ -1,5 +1,5 @@
 version: v2beta1
-name: devspace
+name: products
 
 images:
   products:

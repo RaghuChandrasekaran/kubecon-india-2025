@@ -1,0 +1,53 @@
+version: v2beta1
+name: search
+
+images:
+  search:
+    image: image.registry.local:5001/search
+    dockerfile: ./Dockerfile
+    tags:
+    - latest
+
+deployments:
+  search:
+    kubectl:
+      manifests:
+        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/search/
+      kustomize: true
+
+dev:
+  search:
+    labelSelector:
+      app: search-deployment
+    container: search
+    devImage: ghcr.io/loft-sh/devspace-containers/javascript:18-alpine
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - .devspace/
+          - node_modules/
+          - .git/
+          - "*.log"
+        initialSync: preferLocal
+        printLogs: true
+    terminal:
+      command: ./devspace_start.sh
+    ports:
+      - port: "4000"
+    open:
+      - url: http://localhost:4000
+    env:
+      - name: NODE_ENV
+        value: "development"
+      - name: ELASTIC_URL
+        value: "http://localhost:9200/"
+
+commands:
+  start:
+    command: devspace enter search -- npm start
+  build:
+    command: devspace enter search -- npm run build
+  test:
+    command: devspace enter search -- npm test
+  install:
+    command: devspace enter search -- npm install
