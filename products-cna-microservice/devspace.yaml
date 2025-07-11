@@ -12,7 +12,7 @@ deployments:
   products:
     kubectl:
       manifests:
-        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/products/
+        - ../infra/k8s/apps/overlays/local/products/
       kustomize: true
 
 dev:

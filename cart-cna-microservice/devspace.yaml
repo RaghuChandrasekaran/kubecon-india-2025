@@ -12,7 +12,7 @@ deployments:
   cart:
     kubectl:
       manifests:
-        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/cart/
+        - ../infra/k8s/apps/overlays/local/cart/
       kustomize: true
 
 dev:
