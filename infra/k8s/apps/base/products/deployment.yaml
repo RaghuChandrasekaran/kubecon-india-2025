@@ -10,6 +10,11 @@ spec:
     metadata:
       labels:
         app: products-deployment
+      annotations:
+        sidecar.istio.io/proxyCPU: "0"
+        sidecar.istio.io/proxyCPULimit: "0"
+        sidecar.istio.io/proxyMemory: "0"
+        sidecar.istio.io/proxyMemoryLimit: "0"
     spec:
       containers:
       - name: products

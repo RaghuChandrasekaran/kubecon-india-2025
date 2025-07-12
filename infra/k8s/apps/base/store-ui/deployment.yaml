@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: store-ui-deployment
+
 spec:
   selector:
     matchLabels:
@@ -10,6 +11,11 @@ spec:
     metadata:
       labels:
         app: store-ui-deployment
+      annotations:
+        sidecar.istio.io/proxyCPU: "0"
+        sidecar.istio.io/proxyCPULimit: "0"
+        sidecar.istio.io/proxyMemory: "0"
+        sidecar.istio.io/proxyMemoryLimit: "0"
     spec:
       containers:
       - name: store-ui
