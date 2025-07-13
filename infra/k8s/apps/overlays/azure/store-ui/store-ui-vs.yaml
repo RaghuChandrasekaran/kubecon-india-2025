@@ -2,18 +2,18 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: store-ui
-  namespace: e-commerce
+  namespace: NAMESPACE_PLACEHOLDER
 spec:
   hosts:
   - "*"
   gateways:
-  - aks-istio-ingress/store-ui-gateway   # namespace/name
+  - aks-istio-ingress/store-ui-gateway   # Fixed namespace for the shared gateway
   http:
   - match:                      # everything that hits "/"
     - uri:
         prefix: /
     route:
     - destination:
-        host: store-ui-service.e-commerce.svc.cluster.local
+        host: store-ui-service.NAMESPACE_PLACEHOLDER.svc.cluster.local
         port:
           number: 80            # servicePort in the Service object

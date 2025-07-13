@@ -8,9 +8,9 @@ vars:
   SERVICE_NAME:
     default: "cart"
   K8S_MANIFEST_PATH_LOCAL:
-    default: "../infra/k8s/apps/overlays/local/cart/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/cart/"
   K8S_MANIFEST_PATH_AZURE:
-    default: "../infra/k8s/apps/overlays/azure/cart/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/cart/"
 
 dev:
   cart:

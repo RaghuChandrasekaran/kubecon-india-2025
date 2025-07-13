@@ -8,9 +8,9 @@ vars:
   SERVICE_NAME:
     default: "store-ui"
   K8S_MANIFEST_PATH_LOCAL:
-    default: "../infra/k8s/apps/overlays/local/store-ui/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/store-ui/"
   K8S_MANIFEST_PATH_AZURE:
-    default: "../infra/k8s/apps/overlays/azure/store-ui/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/store-ui/"
 
 dev:
   store-ui:

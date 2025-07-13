@@ -8,9 +8,9 @@ vars:
   SERVICE_NAME:
     default: "search"
   K8S_MANIFEST_PATH_LOCAL:
-    default: "../infra/k8s/apps/overlays/local/search/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/search/"
   K8S_MANIFEST_PATH_AZURE:
-    default: "../infra/k8s/apps/overlays/azure/search/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/search/"
 
 dev:
   search:

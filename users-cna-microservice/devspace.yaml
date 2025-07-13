@@ -8,9 +8,9 @@ vars:
   SERVICE_NAME:
     default: "users"
   K8S_MANIFEST_PATH_LOCAL:
-    default: "../infra/k8s/apps/overlays/local/users/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/users/"
   K8S_MANIFEST_PATH_AZURE:
-    default: "../infra/k8s/apps/overlays/azure/users/"
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/users/"
 
 dev:
   users:
