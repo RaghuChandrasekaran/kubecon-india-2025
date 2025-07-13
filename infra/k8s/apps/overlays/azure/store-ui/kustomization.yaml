@@ -15,11 +15,11 @@ images:
 configMapGenerator:
 - behavior: create
   literals:
-  # Use Kubernetes service URLs for in-cluster communication
-  - REACT_APP_PRODUCTS_URL_BASE=http://products-service:5000/
-  - REACT_APP_CART_URL_BASE=http://cart-service:7000/
-  - REACT_APP_SEARCH_URL_BASE=http://search-service:4000/
-  - REACT_APP_USERS_URL_BASE=http://users-service:9090/
+  # Use the Istio Gateway URL for browser-based API calls
+  - REACT_APP_PRODUCTS_URL_BASE=/api/products/
+  - REACT_APP_CART_URL_BASE=/api/cart/
+  - REACT_APP_SEARCH_URL_BASE=/api/search/
+  - REACT_APP_USERS_URL_BASE=/api/users/
   name: store-ui-configmap
 generatorOptions:
   disableNameSuffixHash: true

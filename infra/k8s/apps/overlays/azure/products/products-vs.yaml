@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: products
+  namespace: e-commerce
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - aks-istio-ingress/store-ui-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/products
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: products-service.e-commerce.svc.cluster.local
+        port:
+          number: 5000

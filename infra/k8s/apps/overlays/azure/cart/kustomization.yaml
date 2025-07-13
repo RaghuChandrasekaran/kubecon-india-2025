@@ -4,6 +4,7 @@ namespace: e-commerce
 
 resources:
 - ../../../base/cart
+- cart-vs.yaml
 
 images:
 - name: cart:latest

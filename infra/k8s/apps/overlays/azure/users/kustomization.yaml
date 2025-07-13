@@ -4,6 +4,7 @@ namespace: e-commerce
 
 resources:
 - ../../../base/users
+- users-vs.yaml
 
 images:
 - name: users:latest

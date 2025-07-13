@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: cart
+  namespace: e-commerce
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - aks-istio-ingress/store-ui-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/cart
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: cart-service.e-commerce.svc.cluster.local
+        port:
+          number: 7000
