@@ -1,19 +1,16 @@
 version: v2beta1
 name: cart
 
-images:
-  cart:
-    image: image.registry.local:5001/cart
-    dockerfile: ./Dockerfile
-    tags:
-    - latest
+imports:
+  - path: "../devspace-common.yaml"
 
-deployments:
-  cart:
-    kubectl:
-      manifests:
-        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/cart/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "cart"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "../infra/k8s/apps/overlays/local/cart/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "../infra/k8s/apps/overlays/azure/cart/"
 
 dev:
   cart:
@@ -48,13 +45,3 @@ dev:
         value: "development"
       - name: LOG_LEVEL_ROOT
         value: "INFO"
-
-commands:
-  start:
-    command: devspace enter cart -- ./gradlew bootRun
-  build:
-    command: devspace enter cart -- ./gradlew build
-  test:
-    command: devspace enter cart -- ./gradlew test
-  clean:
-    command: devspace enter cart -- ./gradlew clean

@@ -1,19 +1,16 @@
 version: v2beta1
 name: users
 
-images:
-  users:
-    image: image.registry.local:5001/users
-    dockerfile: ./Dockerfile
-    tags:
-    - latest
+imports:
+  - path: "../devspace-common.yaml"
 
-deployments:
-  users:
-    kubectl:
-      manifests:
-        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/users/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "users"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "../infra/k8s/apps/overlays/local/users/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "../infra/k8s/apps/overlays/azure/users/"
 
 dev:
   users:
@@ -29,6 +26,7 @@ dev:
           - "*.pyc"
           - .pytest_cache/
           - .git/
+          - "*.log"
         initialSync: preferLocal
         printLogs: true
     terminal:

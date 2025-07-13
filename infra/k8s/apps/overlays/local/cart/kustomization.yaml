@@ -5,6 +5,11 @@ resources:
 - ../../../base/cart
 - service-nodeport.yaml
 
+images:
+- name: cart:latest
+  newName: image.registry.local:5001/cart
+  newTag: latest
+
 configMapGenerator:
 - behavior: create
   literals:

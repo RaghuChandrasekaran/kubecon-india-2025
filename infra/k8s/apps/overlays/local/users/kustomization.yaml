@@ -4,6 +4,12 @@ namespace: e-commerce
 resources:
 - ../../../base/users
 - service-nodeport.yaml
+
+images:
+- name: users:latest
+  newName: image.registry.local:5001/users
+  newTag: latest
+
 configMapGenerator:
 - behavior: create
   literals:

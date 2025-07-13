@@ -4,21 +4,20 @@ namespace: e-commerce
 
 resources:
 - ../../../base/store-ui
-- service-nodeport.yaml
 
 images:
 - name: store-ui:latest
-  newName: image.registry.local:5001/store-ui
+  newName: kubecondemo.azurecr.io/store-ui
   newTag: latest
 
 configMapGenerator:
 - behavior: create
   literals:
   # Use Kubernetes service URLs for in-cluster communication
-  - REACT_APP_PRODUCTS_URL_BASE=http://localhost:8081/
-  - REACT_APP_CART_URL_BASE=http://localhost:8080/
+  - REACT_APP_PRODUCTS_URL_BASE=http://products-service:5000/
+  - REACT_APP_CART_URL_BASE=http://cart-service:7000/
+  - REACT_APP_SEARCH_URL_BASE=http://search-service:4000/
+  - REACT_APP_USERS_URL_BASE=http://users-service:9090/
   name: store-ui-configmap
 generatorOptions:
   disableNameSuffixHash: true
-patches:
-- path: deployment-patch.yaml

@@ -1,0 +1,79 @@
+version: v2beta1
+name: common-scripts
+
+vars:
+  REGISTRY:
+    default: "image.registry.local:5001"
+  AZURE_REGISTRY:
+    default: "kubecondemo.azurecr.io"
+  IMAGE_TAG:
+    default: "latest"
+
+# Generic images template - will be inherited by services
+images:
+  app:
+    image: ${REGISTRY}/${SERVICE_NAME}
+    dockerfile: ./Dockerfile
+    tags:
+    - ${IMAGE_TAG}
+
+# Generic deployments template - will be inherited by services  
+deployments:
+  app:
+    kubectl:
+      manifests:
+        - ${K8S_MANIFEST_PATH_LOCAL}
+      kustomize: true
+
+# Azure ACR profile for Kubernetes
+profiles:
+  - name: azure
+    description: "Azure ACR for Kubernetes deployment"
+    patches:
+      - op: replace
+        path: vars.REGISTRY
+        value: ${AZURE_REGISTRY}
+      - op: replace
+        path: deployments.app.kubectl.manifests[0]
+        value: ${K8S_MANIFEST_PATH_AZURE}
+    activation:
+      - vars:
+          DEVSPACE_PROFILE: "azure"
+
+
+# Standardized commands for consistency across all microservices
+commands:
+  # Development commands
+  dev:
+    command: devspace dev --skip-build --skip-deploy
+    description: "Start development mode with hot reload"
+  
+  # Core deployment commands  
+  deploy:
+    command: devspace deploy
+    description: "Deploy to local environment"
+  
+  build:
+    command: devspace build
+    description: "Build image for local registry"
+  
+  purge:
+    command: devspace purge
+    description: "Remove deployment from cluster"
+  
+  # Azure profile commands
+  deploy-azure:
+    command: devspace deploy --profile azure
+    description: "Deploy to Azure ACR environment"
+  
+  build-azure:
+    command: devspace build --profile azure
+    description: "Build image for Azure ACR"
+  
+  dev-azure:
+    command: devspace dev --skip-build --skip-deploy --profile azure
+    description: "Start development mode with Azure profile"
+  
+  purge-azure:
+    command: devspace purge --profile azure
+    description: "Remove Azure deployment from cluster"

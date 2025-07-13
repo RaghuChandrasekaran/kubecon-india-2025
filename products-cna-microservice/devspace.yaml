@@ -1,19 +1,16 @@
 version: v2beta1
 name: products
 
-images:
-  products:
-    image: image.registry.local:5001/products
-    dockerfile: ./Dockerfile
-    tags:
-    - latest
+imports:
+  - path: "../devspace-common.yaml"
 
-deployments:
-  products:
-    kubectl:
-      manifests:
-        - /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/infra/k8s/apps/overlays/local/products/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "products"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "../infra/k8s/apps/overlays/local/products/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "../infra/k8s/apps/overlays/azure/products/"
 
 dev:
   products:
@@ -21,10 +18,19 @@ dev:
       app: products-deployment
     container: products
     devImage: ghcr.io/loft-sh/devspace-containers/javascript:18-alpine
-    # Sync files between the local filesystem and the development container
     sync:
-      - path: ./
-        uploadExcludeFile: .dockerignore
+      - path: ./:/app
+        excludePaths:
+          - .dockerignore
+          - .devspace/
+          - node_modules/
+          - build/
+          - .git/
+          - "*.log"
+          - package-lock.json
+          - yarn.lock
+        initialSync: preferLocal
+        printLogs: true
     terminal:
       command: ./devspace_start.sh
     ssh:
