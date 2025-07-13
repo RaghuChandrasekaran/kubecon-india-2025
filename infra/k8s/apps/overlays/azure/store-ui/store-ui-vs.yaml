@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: store-ui
+  namespace: e-commerce
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - aks-istio-ingress/store-ui-gateway   # namespace/name
+  http:
+  - match:                      # everything that hits "/"
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: store-ui-service.e-commerce.svc.cluster.local
+        port:
+          number: 80            # servicePort in the Service object

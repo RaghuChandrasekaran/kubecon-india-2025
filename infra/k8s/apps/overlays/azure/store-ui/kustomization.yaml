@@ -4,6 +4,8 @@ namespace: e-commerce
 
 resources:
 - ../../../base/store-ui
+- store-ui-gateway.yaml
+- store-ui-vs.yaml
 
 images:
 - name: store-ui:latest
