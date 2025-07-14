@@ -6,8 +6,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useCart } from '../../components/layout/CartContext';
-import { getCart } from '../../api/cart';
-import axiosClient, { cartUrl } from '../../api/config';
+import { clearCart } from '../../api/cart';
 import SEO from '../../components/SEO';
 
 const OrderConfirmation = () => {
@@ -16,19 +15,16 @@ const OrderConfirmation = () => {
 
     useEffect(() => {
         // Clear the cart in backend
-        const clearCart = async () => {
+        const handleClearCart = async () => {
             try {
-                const cart = await getCart();
-                if (cart && cart.customerId) {
-                    await axiosClient.post(`${cartUrl}cart`, { customerId: cart.customerId, items: [] });
-                    refreshCart();
-                }
+                await clearCart();
+                refreshCart(); // Update the cart state in the UI
             } catch (err) {
                 // Optionally handle error
                 console.error('Failed to clear cart after order', err);
             }
         };
-        clearCart();
+        handleClearCart();
     }, [refreshCart]);
 
     return (

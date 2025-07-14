@@ -27,8 +27,11 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import LockIcon from '@mui/icons-material/Lock';
+import HomeIcon from '@mui/icons-material/Home';
+import AddIcon from '@mui/icons-material/Add';
 import { useCart } from '../../components/layout/CartContext';
 import { getCart } from '../../api/cart';
+import { isAuthenticated, getUserAddresses, saveUserAddress, Address } from '../../api/users';
 import SEO from '../../components/SEO';
 
 // Form validation types
@@ -48,7 +51,8 @@ const initialFormState = {
     postalCode: '',
     country: 'USA',
     email: '',
-    phone: ''
+    phone: '',
+    isDefault: false
   },
   payment: {
     cardName: '',
@@ -82,6 +86,8 @@ const Checkout = () => {
       shipping: false,
       payment: false,
     });
+    const [addresses, setAddresses] = useState<Address[]>([]);
+    const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const { cart: cartContext, refreshCart } = useCart();
 
     // Shipping cost calculation based on method
@@ -103,6 +109,31 @@ const Checkout = () => {
                 navigate('/cart');
             });
     }, [navigate]);
+
+    // Get user addresses if authenticated
+    useEffect(() => {
+        if (isAuthenticated()) {
+            getUserAddresses()
+                .then(fetchedAddresses => {
+                    setAddresses(fetchedAddresses);
+                    // Set default selected address to first one if available
+                    if (fetchedAddresses.length > 0) {
+                        setSelectedAddress(fetchedAddresses[0]);
+                        // Also populate shipping form with first address details
+                        setFormData(prev => ({
+                            ...prev,
+                            shipping: {
+                                ...prev.shipping,
+                                ...fetchedAddresses[0]
+                            }
+                        }));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching addresses:', error);
+                });
+        }
+    }, []);
 
     // Calculate order total including shipping
     const calculateSubtotal = () => {
@@ -279,6 +310,44 @@ const Checkout = () => {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    // Handle address selection
+    const handleAddressSelect = (address: Address) => {
+        setSelectedAddress(address);
+        setFormData(prev => ({
+            ...prev,
+            shipping: {
+                ...prev.shipping,
+                ...address
+            }
+        }));
+    };
+
+    // Handle new address save
+    const handleSaveAddress = () => {
+        // Validate address fields
+        if (!formData.shipping.firstName || !formData.shipping.lastName || !formData.shipping.address || !formData.shipping.city || !formData.shipping.postalCode) {
+            return;
+        }
+        
+        // Simulate API call to save address
+        saveUserAddress(formData.shipping)
+            .then(savedAddress => {
+                setAddresses(prev => [...prev, savedAddress]);
+                setSelectedAddress(savedAddress);
+                setFormData(prev => ({
+                    ...prev,
+                    shipping: {
+                        ...prev.shipping,
+                        ...savedAddress
+                    }
+                }));
+                alert('Address saved successfully!');
+            })
+            .catch(error => {
+                console.error('Error saving address:', error);
+            });
     };
 
     if (loading) {
@@ -491,32 +560,284 @@ const Checkout = () => {
                                         autoComplete="tel"
                                     />
                                 </Grid>
+                                
+                                {/* Saved Addresses Section */}
                                 <Grid item xs={12}>
-                                    <FormControl component="fieldset">
-                                        <FormLabel component="legend">Shipping Method</FormLabel>
-                                        <RadioGroup
-                                            name="shippingMethod"
-                                            value={formData.options.shippingMethod}
-                                            onChange={handleOptionsChange}
-                                        >
-                                            <FormControlLabel
-                                                value="standard"
-                                                control={<Radio />}
-                                                label={`Standard Shipping (3-5 business days) - $${shippingCosts.standard.toFixed(2)}`}
-                                            />
-                                            <FormControlLabel
-                                                value="express"
-                                                control={<Radio />}
-                                                label={`Express Shipping (2 business days) - $${shippingCosts.express.toFixed(2)}`}
-                                            />
-                                            <FormControlLabel
-                                                value="overnight"
-                                                control={<Radio />}
-                                                label={`Overnight Shipping (Next business day) - $${shippingCosts.overnight.toFixed(2)}`}
-                                            />
-                                        </RadioGroup>
-                                    </FormControl>
+                                    <Divider sx={{ my: 2 }} />
+                                    
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                        <HomeIcon sx={{ mr: 1, color: 'primary.main' }} />
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                                            Saved Addresses
+                                        </Typography>
+                                    </Box>
+                                    
+                                    {addresses.length === 0 ? (
+                                        <Typography variant="body2" color="text.secondary">
+                                            No saved addresses found. Fill in the form below to add a new address.
+                                        </Typography>
+                                    ) : (
+                                        <Box sx={{ mb: 2 }}>
+                                            <Grid container spacing={2}>
+                                                {addresses.map((address, index) => (
+                                                    <Grid item xs={12} sm={6} key={address.id || index}>
+                                                        <Paper 
+                                                            elevation={1}
+                                                            sx={{ 
+                                                                p: 2, 
+                                                                border: '1px solid', 
+                                                                borderColor: selectedAddress?.id === address.id ? 'primary.main' : 'divider',
+                                                                borderRadius: 1,
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.3s',
+                                                                position: 'relative',
+                                                                '&:hover': {
+                                                                    borderColor: 'primary.main',
+                                                                    boxShadow: 3
+                                                                }
+                                                            }}
+                                                            onClick={() => handleAddressSelect(address)}
+                                                        >
+                                                            {address.isDefault && (
+                                                                <Chip 
+                                                                    label="Default" 
+                                                                    size="small" 
+                                                                    color="primary" 
+                                                                    sx={{ 
+                                                                        position: 'absolute', 
+                                                                        top: 8, 
+                                                                        right: 8,
+                                                                        fontSize: '0.7rem'
+                                                                    }} 
+                                                                />
+                                                            )}
+                                                            <Typography variant="body1" sx={{ fontWeight: 'medium', mb: 0.5 }}>
+                                                                {address.firstName} {address.lastName}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {address.address}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {address.city}, {address.state} {address.postalCode}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                {address.country}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontSize: '0.85rem' }}>
+                                                                {address.email}
+                                                            </Typography>
+                                                            {address.phone && (
+                                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                                                    {address.phone}
+                                                                </Typography>
+                                                            )}
+
+                                                            {selectedAddress?.id === address.id && (
+                                                                <Box sx={{ 
+                                                                    position: 'absolute', 
+                                                                    bottom: 8, 
+                                                                    right: 8,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                }}>
+                                                                    <CheckCircleIcon color="primary" fontSize="small" />
+                                                                </Box>
+                                                            )}
+                                                        </Paper>
+                                                    </Grid>
+                                                ))}
+                                                <Grid item xs={12}>
+                                                    <Button 
+                                                        variant="outlined" 
+                                                        startIcon={<AddIcon />} 
+                                                        onClick={() => {
+                                                            // Clear form to add a new address
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                shipping: {
+                                                                    ...initialFormState.shipping,
+                                                                    country: prev.shipping.country // Keep current country selection
+                                                                }
+                                                            }));
+                                                            setSelectedAddress(null);
+                                                        }}
+                                                        sx={{ mt: 1 }}
+                                                    >
+                                                        Add New Address
+                                                    </Button>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    )}
+
+                                    {/* New Address Form - Only shown when no address is selected or user clicks "Add New Address" */}
+                                    {(!selectedAddress || addresses.length === 0) && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="subtitle2" gutterBottom>
+                                                {addresses.length === 0 ? 'Add Address' : 'Add New Address'}
+                                            </Typography>
+                                            
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="firstName"
+                                                        name="firstName"
+                                                        label="First Name"
+                                                        value={formData.shipping.firstName}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.firstName}
+                                                        helperText={errors.shipping.firstName}
+                                                        autoComplete="given-name"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="lastName"
+                                                        name="lastName"
+                                                        label="Last Name"
+                                                        value={formData.shipping.lastName}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.lastName}
+                                                        helperText={errors.shipping.lastName}
+                                                        autoComplete="family-name"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="email"
+                                                        name="email"
+                                                        label="Email Address"
+                                                        type="email"
+                                                        value={formData.shipping.email}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.email}
+                                                        helperText={errors.shipping.email}
+                                                        autoComplete="email"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="address"
+                                                        name="address"
+                                                        label="Address"
+                                                        value={formData.shipping.address}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.address}
+                                                        helperText={errors.shipping.address}
+                                                        autoComplete="street-address"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="city"
+                                                        name="city"
+                                                        label="City"
+                                                        value={formData.shipping.city}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.city}
+                                                        helperText={errors.shipping.city}
+                                                        autoComplete="address-level2"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        id="state"
+                                                        name="state"
+                                                        label="State/Province"
+                                                        value={formData.shipping.state}
+                                                        onChange={handleShippingChange}
+                                                        autoComplete="address-level1"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        required
+                                                        fullWidth
+                                                        id="postalCode"
+                                                        name="postalCode"
+                                                        label="ZIP / Postal Code"
+                                                        value={formData.shipping.postalCode}
+                                                        onChange={handleShippingChange}
+                                                        error={!!errors.shipping.postalCode}
+                                                        helperText={errors.shipping.postalCode}
+                                                        autoComplete="postal-code"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        id="country"
+                                                        name="country"
+                                                        select
+                                                        label="Country"
+                                                        value={formData.shipping.country}
+                                                        onChange={handleShippingChange}
+                                                        autoComplete="country"
+                                                    >
+                                                        <MenuItem value="USA">United States</MenuItem>
+                                                        <MenuItem value="CAN">Canada</MenuItem>
+                                                        <MenuItem value="MEX">Mexico</MenuItem>
+                                                    </TextField>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <TextField
+                                                        fullWidth
+                                                        id="phone"
+                                                        name="phone"
+                                                        label="Phone Number"
+                                                        value={formData.shipping.phone}
+                                                        onChange={handleShippingChange}
+                                                        autoComplete="tel"
+                                                    />
+                                                </Grid>
+                                                {isAuthenticated() && (
+                                                    <Grid item xs={12}>
+                                                        <FormControlLabel
+                                                            control={
+                                                                <Checkbox
+                                                                    name="makeDefault"
+                                                                    checked={!!formData.shipping.isDefault}
+                                                                    onChange={(e) => setFormData(prev => ({
+                                                                        ...prev,
+                                                                        shipping: {
+                                                                            ...prev.shipping,
+                                                                            isDefault: e.target.checked
+                                                                        }
+                                                                    }))}
+                                                                    color="primary"
+                                                                />
+                                                            }
+                                                            label="Set as default address"
+                                                        />
+                                                    </Grid>
+                                                )}
+                                                <Grid item xs={12}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                                        <Button
+                                                            variant="contained"
+                                                            onClick={handleSaveAddress}
+                                                            startIcon={<AddIcon />}
+                                                        >
+                                                            Save Address
+                                                        </Button>
+                                                    </Box>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    )}
                                 </Grid>
+                                
                                 <Grid item xs={12}>
                                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                                         <Button
@@ -586,6 +907,15 @@ const Checkout = () => {
                                         error={!!errors.payment.cardNumber}
                                         helperText={errors.payment.cardNumber}
                                         autoComplete="cc-number"
+                                        type="password"
+                                        inputProps={{
+                                            maxLength: 16,
+                                        }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <LockIcon fontSize="small" color="action" />
+                                            ),
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -615,6 +945,15 @@ const Checkout = () => {
                                         error={!!errors.payment.cvv}
                                         helperText={errors.payment.cvv}
                                         autoComplete="cc-csc"
+                                        type="password"
+                                        inputProps={{
+                                            maxLength: 4,
+                                        }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <LockIcon fontSize="small" color="action" />
+                                            ),
+                                        }}
                                     />
                                 </Grid>
                                 <Grid item xs={12}>

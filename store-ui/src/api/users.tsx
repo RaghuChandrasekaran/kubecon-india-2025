@@ -1,5 +1,11 @@
 // filepath: /home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample/store-ui/src/api/users.tsx
+import axios from 'axios';
 import axiosClient, { usersUrl } from "./config";
+
+// Constants for localStorage
+export const USER_TOKEN_KEY = 'user_token';
+export const USER_INFO_KEY = 'user_info';
+export const USER_ADDRESSES_KEY = 'user_addresses';
 
 // Types for User data
 export interface User {
@@ -28,9 +34,30 @@ export interface RegisterData {
   password: string;
 }
 
-// Store auth token in localStorage
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'current_user';
+export interface Address {
+  id: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  email: string;
+  phone?: string;
+  isDefault?: boolean;
+}
+
+// Add auth token to requests if available
+axiosClient.interceptors.request.use(config => {
+  const token = localStorage.getItem(USER_TOKEN_KEY);
+  if (token) {
+    // Ensure headers object exists before setting properties
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 /**
  * Login user and get JWT token
@@ -49,7 +76,7 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
     });
     
     // Store token in localStorage
-    localStorage.setItem(TOKEN_KEY, response.data.access_token);
+    localStorage.setItem(USER_TOKEN_KEY, response.data.access_token);
     
     return response.data;
   } catch (err: any) {
@@ -76,7 +103,7 @@ export const registerUser = async (userData: RegisterData): Promise<User> => {
  */
 export const getCurrentUser = async (): Promise<User> => {
   try {
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(USER_TOKEN_KEY);
     if (!token) {
       throw new Error('No authentication token found');
     }
@@ -98,7 +125,7 @@ export const getCurrentUser = async (): Promise<User> => {
     console.log('Processed user data with role:', userData); // Log processed data with role
     
     // Cache user in localStorage
-    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+    localStorage.setItem(USER_INFO_KEY, JSON.stringify(userData));
     
     return userData;
   } catch (err: any) {
@@ -111,22 +138,22 @@ export const getCurrentUser = async (): Promise<User> => {
  * Logout user by removing token
  */
 export const logoutUser = (): void => {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(USER_TOKEN_KEY);
+  localStorage.removeItem(USER_INFO_KEY);
 };
 
 /**
  * Check if user is logged in
  */
 export const isAuthenticated = (): boolean => {
-  return localStorage.getItem(TOKEN_KEY) !== null;
+  return localStorage.getItem(USER_TOKEN_KEY) !== null;
 };
 
 /**
  * Get cached user data (without API call)
  */
 export const getCachedUser = (): User | null => {
-  const userData = localStorage.getItem(USER_KEY);
+  const userData = localStorage.getItem(USER_INFO_KEY);
   if (!userData) {
     console.log('No cached user data found in localStorage');
     return null;
@@ -150,7 +177,7 @@ export const getCachedUser = (): User | null => {
   } catch (error) {
     console.error('Error parsing cached user data:', error);
     // If there's an error parsing, clear the cache and return null
-    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(USER_INFO_KEY);
     return null;
   }
 };
@@ -219,5 +246,105 @@ export const updateUser = async (userId: number, userData: Partial<User>): Promi
   } catch (err: any) {
     console.error(`Error updating user ${userId}:`, err);
     throw err;
+  }
+};
+
+// Get user's saved addresses
+export const getUserAddresses = async (): Promise<Address[]> => {
+  // First check if addresses are in localStorage
+  const cachedAddresses = localStorage.getItem(USER_ADDRESSES_KEY);
+  if (cachedAddresses) {
+    return JSON.parse(cachedAddresses);
+  }
+  
+  try {
+    // If not in localStorage, fetch from API
+    const response = await axiosClient.get(`${usersUrl}/addresses`);
+    const addresses = response.data;
+    
+    // Cache addresses in localStorage
+    localStorage.setItem(USER_ADDRESSES_KEY, JSON.stringify(addresses));
+    
+    return addresses;
+  } catch (error) {
+    console.error('Error fetching user addresses:', error);
+    // Return empty array if request fails
+    return [];
+  }
+};
+
+// Save a new address for the user
+export const saveUserAddress = async (addressData: Partial<Address>): Promise<Address> => {
+  try {
+    // In a real app, this would send a POST request to your API
+    // For now, we'll simulate an API response
+    
+    // Get existing addresses
+    const existingAddresses = await getUserAddresses();
+    
+    // Create new address with ID
+    const newAddress: Address = {
+      id: `addr_${Date.now()}`,
+      firstName: addressData.firstName || '',
+      lastName: addressData.lastName || '',
+      address: addressData.address || '',
+      city: addressData.city || '',
+      state: addressData.state || '',
+      postalCode: addressData.postalCode || '',
+      country: addressData.country || 'USA',
+      email: addressData.email || '',
+      phone: addressData.phone || '',
+      isDefault: existingAddresses.length === 0 // First address is default
+    };
+    
+    // Save to "API" (localStorage in this case)
+    const updatedAddresses = [...existingAddresses, newAddress];
+    localStorage.setItem(USER_ADDRESSES_KEY, JSON.stringify(updatedAddresses));
+    
+    return newAddress;
+  } catch (error) {
+    console.error('Error saving user address:', error);
+    throw new Error('Failed to save address');
+  }
+};
+
+// Delete a saved address
+export const deleteUserAddress = async (addressId: string): Promise<boolean> => {
+  try {
+    // Get existing addresses
+    const existingAddresses = await getUserAddresses();
+    
+    // Filter out the address to delete
+    const updatedAddresses = existingAddresses.filter(addr => addr.id !== addressId);
+    
+    // Save updated list back to localStorage
+    localStorage.setItem(USER_ADDRESSES_KEY, JSON.stringify(updatedAddresses));
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting user address:', error);
+    return false;
+  }
+};
+
+// Set an address as the default
+export const setDefaultAddress = async (addressId: string): Promise<boolean> => {
+  try {
+    // Get existing addresses
+    const existingAddresses = await getUserAddresses();
+    
+    // Update isDefault flag for all addresses
+    const updatedAddresses = existingAddresses.map(addr => ({
+      ...addr,
+      isDefault: addr.id === addressId
+    }));
+    
+    // Save updated list back to localStorage
+    localStorage.setItem(USER_ADDRESSES_KEY, JSON.stringify(updatedAddresses));
+    
+    return true;
+  } catch (error) {
+    console.error('Error setting default address:', error);
+    return false;
   }
 };
