@@ -16,9 +16,13 @@ const Cart = React.lazy(() => import('./pages/Cart/Cart'));
 const Checkout = React.lazy(() => import('./pages/Checkout/Checkout'));
 const OrderConfirmation = React.lazy(() => import('./pages/OrderConfirmation/OrderConfirmation'));
 
-// Auth pages
-const LoginPage = React.lazy(() => import('./pages/Auth/LoginPage'));
-const RegisterPage = React.lazy(() => import('./pages/Auth/RegisterPage'));
+// Auth pages - using dynamic import with named exports
+const LoginPage = React.lazy(() => 
+  import('./pages/Auth/LoginPage').then(module => ({ default: module.LoginPage }))
+);
+const RegisterPage = React.lazy(() => 
+  import('./pages/Auth/RegisterPage').then(module => ({ default: module.RegisterPage }))
+);
 const ProfilePage = React.lazy(() => import('./pages/Auth/ProfilePage'));
 
 // Admin pages with error boundary
