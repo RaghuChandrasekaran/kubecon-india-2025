@@ -20,11 +20,11 @@ import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import { useCart } from '../../components/layout/CartContext';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import SEO from '../../components/SEO';
 
 const Cart = () => {
     const navigate = useNavigate();
-    const { updateCartCount } = useCart();
-    const [cart, setCart] = useState({} as any);
+    const { cart, updateItemQuantity, removeItem, refreshCart } = useCart();
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
@@ -42,22 +42,16 @@ const Cart = () => {
     const handleUpdateQuantity = async (item: any, newQuantity: number) => {
         if (newQuantity < 1) return;
         try {
-            await updateQuantity(item.productId, newQuantity);
-            const updatedCart = await getCart();
-            setCart(updatedCart);
-            updateCartCount(); // <-- update global cart count
+            await updateItemQuantity(item.sku, newQuantity);
             showMessage('Cart updated successfully', 'success');
         } catch (error) {
             showMessage('Failed to update cart', 'error');
         }
     };
 
-    const handleRemoveItem = async (productId: string) => {
+    const handleRemoveItem = async (sku: string) => {
         try {
-            await removeFromCart(productId);
-            const updatedCart = await getCart();
-            setCart(updatedCart);
-            updateCartCount(); // <-- update global cart count
+            await removeItem(sku);
             showMessage('Item removed from cart', 'success');
         } catch (error) {
             showMessage('Failed to remove item', 'error');
@@ -70,17 +64,45 @@ const Cart = () => {
         }, 0) || 0;
     };
 
-    // run on load
+    // Load cart on mount
     useEffect(() => {
-        getCart().then((cart) => {
-            setCart(cart)
-        }).catch(() => {
+        refreshCart().catch(() => {
             showMessage('Failed to load cart', 'error');
-        })
-    }, [])
+        });
+    }, [refreshCart]);
 
     return (
         <Box sx={{ p: 1 }}>
+            <SEO 
+                title="Your Shopping Cart | E-Commerce Store"
+                description="Review your shopping cart items, update quantities, and proceed to checkout securely. Free shipping on eligible orders over $50."
+                keywords="shopping cart, checkout, online shopping, e-commerce, secure checkout"
+                type="website"
+                url="https://yourdomain.com/cart"
+                schema={{
+                    "@context": "https://schema.org",
+                    "@type": "ItemPage",
+                    "name": "Shopping Cart",
+                    "description": "View and manage your shopping cart items before checkout",
+                    "mainEntity": {
+                        "@type": "ItemList",
+                        "itemListElement": cart?.items?.map((item: any, index: number) => ({
+                            "@type": "ListItem",
+                            "position": index + 1,
+                            "item": {
+                                "@type": "Product",
+                                "name": item.title,
+                                "offers": {
+                                    "@type": "Offer",
+                                    "price": item.price,
+                                    "priceCurrency": item.currency || "USD",
+                                    "availability": "https://schema.org/InStock"
+                                }
+                            }
+                        })) || []
+                    }
+                }}
+            />
             <Paper elevation={3} sx={{ p: 1 }}>
                 {cart?.items?.length === 0 ? (
                     <Typography variant="h6" sx={{ p: 2, textAlign: 'center' }}>

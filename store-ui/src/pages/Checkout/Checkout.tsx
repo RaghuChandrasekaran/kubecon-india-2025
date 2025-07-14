@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
@@ -6,187 +6,897 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Alert from '@mui/material/Alert';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Divider from '@mui/material/Divider';
+import Chip from '@mui/material/Chip';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import CircularProgress from '@mui/material/CircularProgress';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import LockIcon from '@mui/icons-material/Lock';
 import { useCart } from '../../components/layout/CartContext';
 import { getCart } from '../../api/cart';
+import SEO from '../../components/SEO';
 
-const steps = ['Shipping Address', 'Payment Details', 'Review Order'];
+// Form validation types
+interface FormErrors {
+  shipping: Record<string, string>;
+  payment: Record<string, string>;
+}
+
+// Initial form state
+const initialFormState = {
+  shipping: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'USA',
+    email: '',
+    phone: ''
+  },
+  payment: {
+    cardName: '',
+    cardNumber: '',
+    expDate: '',
+    cvv: '',
+    billingAddressSame: true
+  },
+  options: {
+    shippingMethod: 'standard',
+    giftWrap: false,
+    saveInfo: true
+  }
+};
+
+// Initial error state
+const initialErrorState: FormErrors = {
+  shipping: {},
+  payment: {}
+};
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const [activeStep, setActiveStep] = React.useState(0);
-    const [cart, setCart] = React.useState<any>(null);
-    const { updateCartCount } = useCart();
+    const [expandedSection, setExpandedSection] = useState<string>('shipping');
+    const [cart, setCart] = useState<any>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [submitting, setSubmitting] = useState<boolean>(false);
+    const [formData, setFormData] = useState(initialFormState);
+    const [errors, setErrors] = useState<FormErrors>(initialErrorState);
+    const [sectionComplete, setSectionComplete] = useState({
+      shipping: false,
+      payment: false,
+    });
+    const { cart: cartContext, refreshCart } = useCart();
 
-    React.useEffect(() => {
-        getCart().then(setCart).catch(() => {
-            navigate('/cart');
-        });
+    // Shipping cost calculation based on method
+    const shippingCosts = {
+      standard: 5.99,
+      express: 12.99,
+      overnight: 24.99
+    };
+
+    // Get cart data on component mount
+    useEffect(() => {
+        setLoading(true);
+        getCart()
+            .then(cartData => {
+                setCart(cartData);
+                setLoading(false);
+            })
+            .catch(() => {
+                navigate('/cart');
+            });
     }, [navigate]);
 
-    const handleNext = () => {
-        if (activeStep === steps.length - 1) {
-            // Place order
-            // This would typically call your backend API
-            navigate('/order-confirmation');
-            updateCartCount(); // Update cart count after order is placed
-        } else {
-            setActiveStep((prevStep) => prevStep + 1);
-        }
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevStep) => prevStep - 1);
-    };
-
-    const calculateTotal = () => {
+    // Calculate order total including shipping
+    const calculateSubtotal = () => {
         return cart?.items?.reduce((total: number, item: any) => {
             return total + (item.price * item.quantity);
         }, 0) || 0;
     };
 
-    const renderStepContent = (step: number) => {
-        switch (step) {
-            case 0:
-                return (
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="First Name"
-                                autoComplete="given-name"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="Last Name"
-                                autoComplete="family-name"
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="Address"
-                                autoComplete="street-address"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="City"
-                                autoComplete="address-level2"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="Postal Code"
-                                autoComplete="postal-code"
-                            />
-                        </Grid>
-                    </Grid>
-                );
-            case 1:
-                return (
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="Card Number"
-                                autoComplete="cc-number"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="Expiry Date"
-                                placeholder="MM/YY"
-                                autoComplete="cc-exp"
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <TextField
-                                required
-                                fullWidth
-                                label="CVC"
-                                autoComplete="cc-csc"
-                            />
-                        </Grid>
-                    </Grid>
-                );
-            case 2:
-                return (
-                    <Box>
-                        <Typography variant="h6" gutterBottom>
-                            Order Summary
-                        </Typography>
-                        {cart?.items?.map((item: any, index: number) => (
-                            <Grid container key={index} spacing={2}>
-                                <Grid item xs={6}>
-                                    <Typography>{item.title}</Typography>
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Typography>x{item.quantity}</Typography>
-                                </Grid>
-                                <Grid item xs={3}>
-                                    <Typography>${(item.price * item.quantity).toFixed(2)}</Typography>
-                                </Grid>
-                            </Grid>
-                        ))}
-                        <Box sx={{ mt: 2, borderTop: 1, pt: 2 }}>
-                            <Typography variant="h6">
-                                Total: ${calculateTotal().toFixed(2)}
-                            </Typography>
-                        </Box>
-                    </Box>
-                );
-            default:
-                return <Alert severity="error">Unknown step</Alert>;
+    const calculateShipping = () => {
+        return shippingCosts[formData.options.shippingMethod as keyof typeof shippingCosts] || 5.99;
+    };
+
+    const calculateTax = () => {
+        // Simple tax calculation (could be more complex based on location)
+        return calculateSubtotal() * 0.08; // 8% tax rate
+    };
+
+    const calculateTotal = () => {
+        return calculateSubtotal() + calculateShipping() + calculateTax();
+    };
+
+    // Form validation functions
+    const validateShippingForm = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!formData.shipping.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+        }
+        
+        if (!formData.shipping.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
+        }
+        
+        if (!formData.shipping.address.trim()) {
+            newErrors.address = 'Address is required';
+        }
+        
+        if (!formData.shipping.city.trim()) {
+            newErrors.city = 'City is required';
+        }
+        
+        if (!formData.shipping.postalCode.trim()) {
+            newErrors.postalCode = 'Postal code is required';
+        } else if (!/^\d{5}(-\d{4})?$/.test(formData.shipping.postalCode)) {
+            newErrors.postalCode = 'Invalid postal code format';
+        }
+        
+        if (!formData.shipping.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.shipping.email)) {
+            newErrors.email = 'Invalid email format';
+        }
+
+        setErrors(prev => ({ ...prev, shipping: newErrors }));
+        const isValid = Object.keys(newErrors).length === 0;
+        setSectionComplete(prev => ({ ...prev, shipping: isValid }));
+        
+        return isValid;
+    };
+
+    const validatePaymentForm = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!formData.payment.cardName.trim()) {
+            newErrors.cardName = 'Name on card is required';
+        }
+        
+        if (!formData.payment.cardNumber.trim()) {
+            newErrors.cardNumber = 'Card number is required';
+        } else if (!/^\d{16}$/.test(formData.payment.cardNumber.replace(/\s/g, ''))) {
+            newErrors.cardNumber = 'Card number must be 16 digits';
+        }
+        
+        if (!formData.payment.expDate.trim()) {
+            newErrors.expDate = 'Expiration date is required';
+        } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.payment.expDate)) {
+            newErrors.expDate = 'Invalid format (MM/YY)';
+        }
+        
+        if (!formData.payment.cvv.trim()) {
+            newErrors.cvv = 'CVV is required';
+        } else if (!/^\d{3,4}$/.test(formData.payment.cvv)) {
+            newErrors.cvv = 'CVV must be 3 or 4 digits';
+        }
+        
+        setErrors(prev => ({ ...prev, payment: newErrors }));
+        const isValid = Object.keys(newErrors).length === 0;
+        setSectionComplete(prev => ({ ...prev, payment: isValid }));
+        
+        return isValid;
+    };
+
+    // Handle form input changes
+    const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            shipping: {
+                ...prev.shipping,
+                [name as string]: value
+            }
+        }));
+    };
+
+    const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            payment: {
+                ...prev.payment,
+                [name as string]: value
+            }
+        }));
+    };
+
+    const handleOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value, checked, type } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            options: {
+                ...prev.options,
+                [name]: type === 'checkbox' ? checked : value
+            }
+        }));
+    };
+
+    // Handle form section expansion
+    const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+        setExpandedSection(isExpanded ? panel : '');
+    };
+
+    // Handle shipping form completion
+    const completeShippingSection = () => {
+        if (validateShippingForm()) {
+            setExpandedSection('payment');
         }
     };
 
-    if (!cart?.items?.length) {
-        return null; // Or loading state
+    // Handle payment form completion
+    const completePaymentSection = () => {
+        if (validatePaymentForm()) {
+            setExpandedSection('review');
+        }
+    };
+
+    // Handle form submission
+    const handleSubmitOrder = async () => {
+        // Validate all sections first
+        const isShippingValid = validateShippingForm();
+        const isPaymentValid = validatePaymentForm();
+        
+        if (!isShippingValid) {
+            setExpandedSection('shipping');
+            return;
+        }
+        
+        if (!isPaymentValid) {
+            setExpandedSection('payment');
+            return;
+        }
+        
+        setSubmitting(true);
+        
+        // Simulate API call to place order
+        try {
+            // In a real app, you would call your API here
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Success - navigate to confirmation page
+            refreshCart(); // Update cart count to reflect empty cart
+            navigate('/order-confirmation');
+        } catch (error) {
+            console.error('Error placing order:', error);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+                <CircularProgress />
+            </Box>
+        );
     }
 
+    if (!cart?.items?.length) {
+        return (
+            <Box sx={{ p: 3, textAlign: 'center' }}>
+                <Alert severity="info">
+                    Your cart is empty. Please add items to your cart before proceeding to checkout.
+                </Alert>
+                <Button 
+                    variant="contained" 
+                    sx={{ mt: 2 }}
+                    onClick={() => navigate('/')}
+                >
+                    Continue Shopping
+                </Button>
+            </Box>
+        );
+    }
+
+    // Prepare structured data for SEO
+    const checkoutSchema = {
+        "@context": "https://schema.org",
+        "@type": "CheckoutPage",
+        "name": "Secure Checkout",
+        "description": "Complete your purchase securely with multiple payment options and fast shipping",
+        "mainEntity": {
+            "@type": "Order",
+            "acceptedPaymentMethod": [
+                {
+                    "@type": "PaymentMethod",
+                    "name": "Credit Card"
+                }
+            ],
+            "discount": 0,
+            "offeredBy": {
+                "@type": "Organization",
+                "name": "E-Commerce Store"
+            },
+            "orderStatus": "OrderInProgress"
+        }
+    };
+
     return (
-        <Box sx={{ p: 3 }}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-                <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-                    {steps.map((label) => (
-                        <Step key={label}>
-                            <StepLabel>{label}</StepLabel>
-                        </Step>
-                    ))}
-                </Stepper>
-
-                {renderStepContent(activeStep)}
-
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-                    {activeStep !== 0 && (
-                        <Button onClick={handleBack} sx={{ mr: 1 }}>
-                            Back
-                        </Button>
-                    )}
-                    <Button
-                        variant="contained"
-                        onClick={handleNext}
+        <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', mx: 'auto' }}>
+            <SEO 
+                title="Secure Checkout | E-Commerce Store" 
+                description="Complete your purchase securely with multiple payment options and fast shipping. Your personal information is encrypted and protected."
+                keywords="secure checkout, payment options, fast shipping, credit card, express shipping"
+                type="checkout"
+                schema={checkoutSchema}
+            />
+            <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
+                Checkout
+            </Typography>
+            
+            <Grid container spacing={3}>
+                {/* Main checkout form */}
+                <Grid item xs={12} md={8}>
+                    {/* Shipping Information Section */}
+                    <Accordion 
+                        expanded={expandedSection === 'shipping'} 
+                        onChange={handleAccordionChange('shipping')}
+                        sx={{ mb: 2 }}
                     >
-                        {activeStep === steps.length - 1 ? 'Place Order' : 'Next'}
-                    </Button>
-                </Box>
-            </Paper>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="shipping-content"
+                            id="shipping-header"
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <LocalShippingIcon sx={{ mr: 2, color: 'primary.main' }} />
+                                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                                    Shipping Information
+                                </Typography>
+                                {sectionComplete.shipping && (
+                                    <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                                )}
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="firstName"
+                                        name="firstName"
+                                        label="First Name"
+                                        value={formData.shipping.firstName}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.firstName}
+                                        helperText={errors.shipping.firstName}
+                                        autoComplete="given-name"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="lastName"
+                                        name="lastName"
+                                        label="Last Name"
+                                        value={formData.shipping.lastName}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.lastName}
+                                        helperText={errors.shipping.lastName}
+                                        autoComplete="family-name"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="email"
+                                        name="email"
+                                        label="Email Address"
+                                        type="email"
+                                        value={formData.shipping.email}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.email}
+                                        helperText={errors.shipping.email}
+                                        autoComplete="email"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="address"
+                                        name="address"
+                                        label="Address"
+                                        value={formData.shipping.address}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.address}
+                                        helperText={errors.shipping.address}
+                                        autoComplete="street-address"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="city"
+                                        name="city"
+                                        label="City"
+                                        value={formData.shipping.city}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.city}
+                                        helperText={errors.shipping.city}
+                                        autoComplete="address-level2"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        id="state"
+                                        name="state"
+                                        label="State/Province"
+                                        value={formData.shipping.state}
+                                        onChange={handleShippingChange}
+                                        autoComplete="address-level1"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="postalCode"
+                                        name="postalCode"
+                                        label="ZIP / Postal Code"
+                                        value={formData.shipping.postalCode}
+                                        onChange={handleShippingChange}
+                                        error={!!errors.shipping.postalCode}
+                                        helperText={errors.shipping.postalCode}
+                                        autoComplete="postal-code"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        fullWidth
+                                        id="country"
+                                        name="country"
+                                        select
+                                        label="Country"
+                                        value={formData.shipping.country}
+                                        onChange={handleShippingChange}
+                                        autoComplete="country"
+                                    >
+                                        <MenuItem value="USA">United States</MenuItem>
+                                        <MenuItem value="CAN">Canada</MenuItem>
+                                        <MenuItem value="MEX">Mexico</MenuItem>
+                                    </TextField>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        id="phone"
+                                        name="phone"
+                                        label="Phone Number"
+                                        value={formData.shipping.phone}
+                                        onChange={handleShippingChange}
+                                        autoComplete="tel"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <FormControl component="fieldset">
+                                        <FormLabel component="legend">Shipping Method</FormLabel>
+                                        <RadioGroup
+                                            name="shippingMethod"
+                                            value={formData.options.shippingMethod}
+                                            onChange={handleOptionsChange}
+                                        >
+                                            <FormControlLabel
+                                                value="standard"
+                                                control={<Radio />}
+                                                label={`Standard Shipping (3-5 business days) - $${shippingCosts.standard.toFixed(2)}`}
+                                            />
+                                            <FormControlLabel
+                                                value="express"
+                                                control={<Radio />}
+                                                label={`Express Shipping (2 business days) - $${shippingCosts.express.toFixed(2)}`}
+                                            />
+                                            <FormControlLabel
+                                                value="overnight"
+                                                control={<Radio />}
+                                                label={`Overnight Shipping (Next business day) - $${shippingCosts.overnight.toFixed(2)}`}
+                                            />
+                                        </RadioGroup>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                        <Button
+                                            variant="contained"
+                                            onClick={completeShippingSection}
+                                        >
+                                            Continue to Payment
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
+
+                    {/* Payment Information Section */}
+                    <Accordion 
+                        expanded={expandedSection === 'payment'} 
+                        onChange={handleAccordionChange('payment')}
+                        sx={{ mb: 2 }}
+                    >
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="payment-content"
+                            id="payment-header"
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <PaymentIcon sx={{ mr: 2, color: 'primary.main' }} />
+                                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                                    Payment Information
+                                </Typography>
+                                {sectionComplete.payment && (
+                                    <CheckCircleIcon color="success" sx={{ ml: 1 }} />
+                                )}
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                <LockIcon color="success" sx={{ mr: 1 }} />
+                                <Typography variant="body2" color="text.secondary">
+                                    Your payment information is secure and encrypted
+                                </Typography>
+                            </Box>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="cardName"
+                                        name="cardName"
+                                        label="Name on Card"
+                                        value={formData.payment.cardName}
+                                        onChange={handlePaymentChange}
+                                        error={!!errors.payment.cardName}
+                                        helperText={errors.payment.cardName}
+                                        autoComplete="cc-name"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="cardNumber"
+                                        name="cardNumber"
+                                        label="Card Number"
+                                        value={formData.payment.cardNumber}
+                                        onChange={handlePaymentChange}
+                                        error={!!errors.payment.cardNumber}
+                                        helperText={errors.payment.cardNumber}
+                                        autoComplete="cc-number"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="expDate"
+                                        name="expDate"
+                                        label="Expiry Date"
+                                        placeholder="MM/YY"
+                                        value={formData.payment.expDate}
+                                        onChange={handlePaymentChange}
+                                        error={!!errors.payment.expDate}
+                                        helperText={errors.payment.expDate}
+                                        autoComplete="cc-exp"
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                        required
+                                        fullWidth
+                                        id="cvv"
+                                        name="cvv"
+                                        label="CVV"
+                                        value={formData.payment.cvv}
+                                        onChange={handlePaymentChange}
+                                        error={!!errors.payment.cvv}
+                                        helperText={errors.payment.cvv}
+                                        autoComplete="cc-csc"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                name="billingAddressSame"
+                                                checked={formData.payment.billingAddressSame}
+                                                onChange={(e) => setFormData(prev => ({
+                                                    ...prev,
+                                                    payment: {
+                                                        ...prev.payment,
+                                                        billingAddressSame: e.target.checked
+                                                    }
+                                                }))}
+                                                color="primary"
+                                            />
+                                        }
+                                        label="Billing address same as shipping address"
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                                        <Button
+                                            onClick={() => setExpandedSection('shipping')}
+                                        >
+                                            Back to Shipping
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={completePaymentSection}
+                                        >
+                                            Review Order
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
+
+                    {/* Order Review Section */}
+                    <Accordion 
+                        expanded={expandedSection === 'review'} 
+                        onChange={handleAccordionChange('review')}
+                        sx={{ mb: 2 }}
+                    >
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="review-content"
+                            id="review-header"
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                <ReceiptIcon sx={{ mr: 2, color: 'primary.main' }} />
+                                <Typography variant="h6">
+                                    Review Order
+                                </Typography>
+                            </Box>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Grid container spacing={3}>
+                                {/* Shipping Info Summary */}
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" gutterBottom>
+                                        Shipping Information
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formData.shipping.firstName} {formData.shipping.lastName}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formData.shipping.address}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formData.shipping.city}, {formData.shipping.state} {formData.shipping.postalCode}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formData.shipping.country}
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1 }}>
+                                        Email: {formData.shipping.email}
+                                    </Typography>
+                                    {formData.shipping.phone && (
+                                        <Typography variant="body1">
+                                            Phone: {formData.shipping.phone}
+                                        </Typography>
+                                    )}
+                                    <Chip 
+                                        label={`${formData.options.shippingMethod.charAt(0).toUpperCase()}${formData.options.shippingMethod.slice(1)} Shipping`} 
+                                        size="small" 
+                                        color="primary" 
+                                        sx={{ mt: 1 }}
+                                    />
+                                </Grid>
+                                
+                                {/* Payment Info Summary */}
+                                <Grid item xs={12} md={6}>
+                                    <Typography variant="h6" gutterBottom>
+                                        Payment Information
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        {formData.payment.cardName}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        Card ending in {formData.payment.cardNumber.slice(-4)}
+                                    </Typography>
+                                    <Typography variant="body1">
+                                        Expires: {formData.payment.expDate}
+                                    </Typography>
+                                    {formData.payment.billingAddressSame ? (
+                                        <Chip label="Billing address same as shipping" size="small" sx={{ mt: 1 }} />
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Custom billing address
+                                        </Typography>
+                                    )}
+                                </Grid>
+                                
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 2 }} />
+                                    
+                                    {/* Order Items */}
+                                    <Typography variant="h6" gutterBottom>
+                                        Order Items ({cart?.items?.length})
+                                    </Typography>
+                                    
+                                    {cart?.items?.map((item: any, index: number) => (
+                                        <Box key={index} sx={{ 
+                                            display: 'flex', 
+                                            justifyContent: 'space-between',
+                                            py: 1,
+                                            borderBottom: index < cart.items.length - 1 ? '1px solid #eee' : 'none'
+                                        }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                                                    {item.title}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
+                                                    x{item.quantity}
+                                                </Typography>
+                                            </Box>
+                                            <Typography variant="body1">
+                                                ${(item.price * item.quantity).toFixed(2)}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                    
+                                    {/* Order Options */}
+                                    <Box sx={{ mt: 3 }}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    name="giftWrap"
+                                                    checked={formData.options.giftWrap}
+                                                    onChange={handleOptionsChange}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Add gift wrapping (+$4.99)"
+                                        />
+                                        
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    name="saveInfo"
+                                                    checked={formData.options.saveInfo}
+                                                    onChange={handleOptionsChange}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Save my information for future orders"
+                                        />
+                                    </Box>
+                                </Grid>
+                                
+                                <Grid item xs={12}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                                        <Button
+                                            onClick={() => setExpandedSection('payment')}
+                                        >
+                                            Back to Payment
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            onClick={handleSubmitOrder}
+                                            disabled={submitting}
+                                            sx={{ minWidth: '150px' }}
+                                        >
+                                            {submitting ? (
+                                                <CircularProgress size={24} color="inherit" />
+                                            ) : (
+                                                'Place Order'
+                                            )}
+                                        </Button>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
+                </Grid>
+                
+                {/* Order Summary Sidebar */}
+                <Grid item xs={12} md={4}>
+                    <Paper elevation={3} sx={{ p: 3, position: { md: 'sticky' }, top: { md: '20px' } }}>
+                        <Typography variant="h6" gutterBottom>
+                            Order Summary
+                        </Typography>
+                        
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            mb: 1 
+                        }}>
+                            <Typography variant="body1">
+                                Subtotal ({cart?.items?.reduce((total: number, item: any) => total + item.quantity, 0)} items)
+                            </Typography>
+                            <Typography variant="body1">
+                                ${calculateSubtotal().toFixed(2)}
+                            </Typography>
+                        </Box>
+                        
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            mb: 1
+                        }}>
+                            <Typography variant="body1">
+                                Shipping
+                            </Typography>
+                            <Typography variant="body1">
+                                ${calculateShipping().toFixed(2)}
+                            </Typography>
+                        </Box>
+                        
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            mb: 1
+                        }}>
+                            <Typography variant="body1">
+                                Tax
+                            </Typography>
+                            <Typography variant="body1">
+                                ${calculateTax().toFixed(2)}
+                            </Typography>
+                        </Box>
+                        
+                        {formData.options.giftWrap && (
+                            <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between',
+                                mb: 1
+                            }}>
+                                <Typography variant="body1">
+                                    Gift Wrapping
+                                </Typography>
+                                <Typography variant="body1">
+                                    $4.99
+                                </Typography>
+                            </Box>
+                        )}
+                        
+                        <Divider sx={{ my: 2 }} />
+                        
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between',
+                            mb: 1
+                        }}>
+                            <Typography variant="h6">
+                                Total
+                            </Typography>
+                            <Typography variant="h6" color="primary.main">
+                                ${(calculateTotal() + (formData.options.giftWrap ? 4.99 : 0)).toFixed(2)}
+                            </Typography>
+                        </Box>
+                        
+                        <Alert severity="info" sx={{ mt: 2 }}>
+                            Your credit card will be charged when you place your order.
+                        </Alert>
+                    </Paper>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

@@ -1,302 +1,329 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { searchUrl } from '../api/config';
+import { 
+  Box, 
+  TextField, 
+  Button, 
+  Typography, 
+  Paper, 
+  InputAdornment, 
+  Chip, 
+  CircularProgress,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  CardActionArea,
+  Divider,
+  useTheme,
+  List,
+  ListItem,
+  ListItemText,
+  InputBase,
+  IconButton,
+  styled,
+  alpha
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import TuneIcon from '@mui/icons-material/Tune';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import HistoryIcon from '@mui/icons-material/History';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import CategoryIcon from '@mui/icons-material/Category';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import CloseIcon from '@mui/icons-material/Close';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+
+// Styled search input similar to the screenshot
+const SearchInput = styled(InputBase)(({ theme }) => ({
+  width: '100%',
+  fontSize: '0.95rem',
+  padding: '8px 16px',
+  transition: theme.transitions.create('width'),
+  backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : '#f5f5f5',
+  borderRadius: 4,
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.15) : '#e5e5e5',
+  },
+  '&.Mui-focused': {
+    backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.15) : '#e5e5e5',
+  }
+}));
+
+const SearchResults = styled(Paper)(({ theme }) => ({
+  position: 'absolute',
+  width: '100%',
+  maxHeight: '400px',
+  overflow: 'auto',
+  zIndex: 1300,
+  marginTop: '4px',
+  borderRadius: 4,
+  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+}));
+
+const ProductCard = styled(Card)(({ theme }) => ({
+  display: 'flex',
+  borderRadius: 4,
+  boxShadow: 'none',
+  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+  '&:hover': {
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  }
+}));
 
 interface SearchResult {
   id: string;
   title: string;
-  description: string;
-  category: string;
+  description?: string;
   price: number;
-  imageUrl?: string;
-  inStock: boolean;
-  rating: number;
-  score: number;
-  highlights?: any;
-}
-
-interface SearchResponse {
-  total: number;
-  products: SearchResult[];
-  query: {
-    searchTerm: string;
-    category?: string;
-    priceRange?: { min?: string; max?: string };
-    pagination: { limit: number; offset: number };
-  };
+  thumbnail?: string;
 }
 
 const SearchComponent: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('query') || '');
-  const [results, setResults] = useState<SearchResponse | null>(null);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
-  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [query, setQuery] = useState<string>(searchParams.get('query') || '');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const theme = useTheme();
+  
+  // Debounce search suggestions
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Search function
-  const handleSearch = async (queryOverride?: string) => {
-    const query = queryOverride || searchTerm;
-    if (!query.trim()) return;
-    
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        query: query,
-        limit: '10',
-        ...(category && { category }),
-        ...(minPrice && { minPrice }),
-        ...(maxPrice && { maxPrice })
-      });
-
-      // Update URL params
-      setSearchParams(params);
-
-      console.log('Making search API call to:', `${searchUrl}api/search?${params}`);
-      
-      const response = await fetch(`${searchUrl}api/search?${params}`);
-      const data = await response.json();
-      
-      console.log('Search API response:', response.status, data);
-      
-      if (response.ok) {
-        setResults(data);
-      } else {
-        console.error('Search error:', data);
-      }
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setLoading(false);
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (query.trim()) {
+      navigate(`/search?query=${encodeURIComponent(query.trim())}`);
+      setShowDropdown(false);
     }
   };
 
-  // Handle button click
-  const handleSearchClick = () => {
-    handleSearch();
-  };
-
-  // Auto-search when component mounts with query param
-  useEffect(() => {
-    const queryFromUrl = searchParams.get('query');
-    if (queryFromUrl) {
-      setSearchTerm(queryFromUrl);
-      handleSearch(queryFromUrl);
-    }
-  }, []);
-
-  // Get suggestions
-  const getSuggestions = async (query: string) => {
-    if (query.length < 2) {
+  const fetchSuggestions = useCallback(async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
       setSuggestions([]);
       return;
     }
-
+    
     try {
-      console.log('Making suggestions API call to:', `${searchUrl}api/suggest?query=${encodeURIComponent(query)}&limit=5`);
+      setLoading(true);
+      const response = await fetch(`${searchUrl}?query=${encodeURIComponent(searchTerm)}&limit=5`);
       
-      const response = await fetch(`${searchUrl}api/suggest?query=${encodeURIComponent(query)}&limit=5`);
-      const data = await response.json();
-      
-      console.log('Suggestions API response:', response.status, data);
-      
-      if (response.ok) {
-        setSuggestions(data.suggestions || []);
+      if (!response.ok) {
+        throw new Error('Search failed');
       }
-    } catch (error) {
-      console.error('Suggestions failed:', error);
+      
+      const data = await response.json();
+      // Extract unique terms from results
+      const terms = data.results.map((item: any) => item.title).slice(0, 5);
+      setSuggestions(terms);
+      setLoading(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching suggestions:', err);
+      setError('Failed to get suggestions');
+      setLoading(false);
+    }
+  }, []);
+
+  const debounceFetchSuggestions = (searchTerm: string) => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    
+    debounceTimeout.current = setTimeout(() => {
+      fetchSuggestions(searchTerm);
+    }, 300);
+  };
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setQuery(value);
+    
+    if (value.trim().length > 1) {
+      setShowDropdown(true);
+      debounceFetchSuggestions(value);
+    } else {
+      setShowDropdown(false);
+      setSuggestions([]);
     }
   };
 
-  // Handle input change with debounced suggestions
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      getSuggestions(searchTerm);
-    }, 300);
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    navigate(`/search?query=${encodeURIComponent(suggestion)}`);
+    setShowDropdown(false);
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
+  const handleFocus = () => {
+    if (query.trim().length > 1) {
+      setShowDropdown(true);
+    }
+  };
 
-  // Debug: Show current searchUrl
-  useEffect(() => {
-    console.log('Search service URL configured as:', searchUrl);
-  }, []);
+  const handleBlur = () => {
+    // Delay hiding dropdown to allow clicking suggestions
+    setTimeout(() => {
+      setShowDropdown(false);
+    }, 200);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // Handle keyboard navigation in dropdown
+    if (!showDropdown) return;
+    
+    switch (event.key) {
+      case 'Escape':
+        setShowDropdown(false);
+        break;
+      case 'ArrowDown':
+        // Navigate down in suggestions
+        // Implementation for keyboard navigation would go here
+        break;
+      case 'ArrowUp':
+        // Navigate up in suggestions
+        break;
+      case 'Enter':
+        // Submit form will be handled by the form's onSubmit
+        break;
+    }
+  };
+
+  // Popular search terms
+  const popularSearches = [
+    'sneakers', 'running shoes', 'women\'s flats', 'shoe rack', 'shoe polish'
+  ];
 
   return (
-    <div className="search-container" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h2>🔍 Product Search</h2>
-      
-      {/* Search Form */}
-      <div className="search-form" style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-          <div style={{ position: 'relative', flex: 1 }}>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search products..."
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '16px'
-              }}
-            />
-            
-            {/* Suggestions Dropdown */}
-            {suggestions.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #ddd',
-                borderTop: 'none',
-                borderRadius: '0 0 4px 4px',
-                zIndex: 1000,
-                maxHeight: '200px',
-                overflowY: 'auto'
-              }}>
-                {suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    onClick={() => {
-                      setSearchTerm(suggestion.title);
-                      setSuggestions([]);
-                    }}
-                    style={{
-                      padding: '10px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #eee'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+    <Box position="relative" width="100%" maxWidth={600} sx={{ mx: 'auto' }}>
+      <form onSubmit={handleSearch} aria-label="Search products">
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+          <SearchInput
+            inputRef={inputRef}
+            placeholder="Search for shoes, sneakers and more..."
+            value={query}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            startAdornment={
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            }
+            endAdornment={
+              query && (
+                <InputAdornment position="end">
+                  <IconButton 
+                    size="small" 
+                    onClick={() => setQuery('')}
+                    edge="end"
+                    aria-label="Clear search"
                   >
-                    <div style={{ fontWeight: 'bold' }}>{suggestion.title}</div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {suggestion.category} - ${suggestion.price}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          
-          <button
-            onClick={handleSearchClick}
-            disabled={loading}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px'
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              )
+            }
+            fullWidth
+            aria-label="Search products"
+            aria-expanded={showDropdown}
+            aria-autocomplete="list"
+            aria-controls={showDropdown ? 'search-suggestions' : undefined}
+          />
+          <Button 
+            type="submit" 
+            variant="contained"
+            color="primary"
+            sx={{ 
+              ml: 1,
+              backgroundColor: '#FF9800',
+              '&:hover': {
+                backgroundColor: '#F57C00',
+              },
+              minWidth: '80px',
+              height: '40px'
             }}
           >
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
+            Search
+          </Button>
+        </Box>
+      </form>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px' }}
-          >
-            <option value="">All Categories</option>
-            <option value="electronics">Electronics</option>
-            <option value="fashion">Fashion</option>
-            <option value="books">Books</option>
-            <option value="home">Home & Garden</option>
-          </select>
-          
-          <input
-            type="number"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            placeholder="Min Price"
-            style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100px' }}
-          />
-          
-          <input
-            type="number"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            placeholder="Max Price"
-            style={{ padding: '5px', border: '1px solid #ddd', borderRadius: '4px', width: '100px' }}
-          />
-        </div>
-      </div>
-
-      {/* Results */}
-      {results && (
-        <div className="search-results">
-          <h3>Search Results ({results.total} found)</h3>
-          
-          {results.products.length === 0 ? (
-            <p>No products found for "{results.query.searchTerm}"</p>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-              {results.products.map((product) => (
-                <div
-                  key={product.id}
-                  style={{
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    backgroundColor: 'white',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}
+      {showDropdown && (
+        <SearchResults elevation={3} id="search-suggestions" role="listbox">
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : error ? (
+            <Box sx={{ p: 2, color: 'error.main' }}>
+              {error}
+            </Box>
+          ) : suggestions.length > 0 ? (
+            <List sx={{ p: 0 }}>
+              {suggestions.map((suggestion, index) => (
+                <ListItem
+                  key={index}
+                  button
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  role="option"
+                  aria-selected={false}
+                  divider
                 >
-                  <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
-                    {product.highlights?.title ? (
-                      <span dangerouslySetInnerHTML={{ __html: product.highlights.title[0] }} />
-                    ) : (
-                      product.title
-                    )}
-                  </h4>
-                  
-                  <p style={{ color: '#666', fontSize: '14px', margin: '5px 0' }}>
-                    {product.highlights?.description ? (
-                      <span dangerouslySetInnerHTML={{ __html: product.highlights.description[0] }} />
-                    ) : (
-                      product.description
-                    )}
-                  </p>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#007bff' }}>
-                      ${product.price}
-                    </span>
-                    <span style={{ 
-                      backgroundColor: product.inStock ? '#28a745' : '#dc3545',
-                      color: 'white',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: '12px'
-                    }}>
-                      {product.inStock ? 'In Stock' : 'Out of Stock'}
-                    </span>
-                  </div>
-                  
-                  <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
-                    Category: {product.category} | Rating: ⭐ {product.rating} | Score: {product.score?.toFixed(2)}
-                  </div>
-                </div>
+                  <SearchIcon color="action" sx={{ mr: 1, fontSize: '1.1rem' }} />
+                  <ListItemText 
+                    primary={suggestion} 
+                    primaryTypographyProps={{ 
+                      variant: 'body2',
+                      style: { fontWeight: 500 }
+                    }} 
+                  />
+                  <KeyboardArrowRightIcon color="action" fontSize="small" />
+                </ListItem>
               ))}
-            </div>
+            </List>
+          ) : query.length > 1 ? (
+            <Box sx={{ p: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                No suggestions found for "{query}"
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ p: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>
+                Popular Searches
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {popularSearches.map((term, index) => (
+                  <Chip
+                    key={index}
+                    label={term}
+                    size="small"
+                    onClick={() => handleSuggestionClick(term)}
+                    sx={{ 
+                      backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.2) : alpha(theme.palette.primary.main, 0.1),
+                      color: theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
+                      cursor: 'pointer',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.3) : alpha(theme.palette.primary.main, 0.2),
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
           )}
-        </div>
+        </SearchResults>
       )}
-    </div>
+    </Box>
   );
 };
 
