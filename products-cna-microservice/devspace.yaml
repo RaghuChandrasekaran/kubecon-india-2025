@@ -2,7 +2,7 @@ version: v2beta1
 name: products
 
 imports:
-  - path: "../devspace-common.yaml"
+  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
 vars:
   SERVICE_NAME:
