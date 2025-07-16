@@ -3,7 +3,13 @@ kind: Deployment
 metadata:
   name: cart-deployment
 spec:
+  selector:
+    matchLabels:
+      app: cart-deployment
   template:
+    metadata:
+      labels:
+        app: cart-deployment
     spec:
       containers:
       - name: cart

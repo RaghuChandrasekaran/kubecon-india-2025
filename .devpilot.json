@@ -1,0 +1,37 @@
+{
+  "project_name": "e-commerce-microservices-sample",
+  "config": {
+    "root_location": "/home/naveenkumar.kumanan/Naveen_personal/e-commerce-microservices-sample"
+  },
+  "mono_repo": "yes",
+  "services": [
+    {
+      "name": "users_cna",
+      "location": "users-cna-microservice"
+    },
+    {
+      "name": "search_cna",
+      "location": "search-cna-microservice"
+    },
+    {
+      "name": "products_cna",
+      "location": "products-cna-microservice"
+    },
+    {
+      "name": "cart_cna",
+      "location": "cart-cna-microservice"
+    },
+    {
+      "name": "store_ui",
+      "location": "store-ui"
+    }
+  ],
+  "deployment_manifests_location": "infra/k8s/",
+  "helper_scripts_location": ".devpilot-scripts",
+  "devDependencies": [
+    "docker",
+    "kind",
+    "devspace",
+    "kubectl"
+  ]
+}

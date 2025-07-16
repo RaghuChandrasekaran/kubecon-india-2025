@@ -1,12 +1,6 @@
-# e-commerce-microservices-sample
+# e-commerce-microservices-sample DevPilot Scripts
 
-This project is managed with DevPilot.
-
-## Getting Started
-
-1. Install dependencies: `devpilot setup-env`
-2. Start the environment: `devpilot start-env`
-3. Run the server: `devpilot run-server`
+This directory contains automation scripts managed by DevPilot.
 
 ## Available Commands
 

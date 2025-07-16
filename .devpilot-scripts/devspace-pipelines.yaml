@@ -1,0 +1,183 @@
+version: v2beta1
+name: common-scripts
+
+vars:
+  REGISTRY:
+    default: "image.registry.local:5001"
+  AZURE_REGISTRY:
+    default: "kubecondemo.azurecr.io"
+  IMAGE_TAG:
+    default: "latest"
+  # Use sanitized username as default namespace
+  NAMESPACE:
+    command: "echo $USER | tr '.' '-'"
+  # Base directory for Kubernetes manifests
+  K8S_DIR:
+    default: ".."
+
+# Generic images template - will be inherited by services
+images:
+  app:
+    image: ${REGISTRY}/${SERVICE_NAME}
+    dockerfile: ./Dockerfile
+    tags:
+    - ${IMAGE_TAG}
+
+# Define reusable pipelines to reduce duplication
+pipelines:
+  # Common pipeline to prepare manifests with namespace replacement
+  prepare-manifests:
+    run: |
+      # Create a temporary directory for the customized yaml
+      TEMP_DIR=$(mktemp -d)
+      echo "Creating temporary files in $TEMP_DIR"
+      echo "export TEMP_DIR=$TEMP_DIR" > ~/.devspace/vars/temp_dir.env
+      
+      # Get the base directory
+      source ~/.devspace/vars/env_type.env
+      source ~/.devspace/vars/k8s_path.env
+      MANIFEST_PATH="${K8S_PATH}"
+      SERVICE_DIR=$(basename "${MANIFEST_PATH}")
+      BASE_DIR=$(dirname "${MANIFEST_PATH}")
+      BASE_DIR=$(dirname "$BASE_DIR")
+      BASE_DIR=$(dirname "$BASE_DIR")
+      
+      # Copy the necessary files to the temp directory
+      mkdir -p $TEMP_DIR/base $TEMP_DIR/overlays/$ENV_TYPE
+      cp -r ${BASE_DIR}/base/* $TEMP_DIR/base/
+      cp -r ${BASE_DIR}/overlays/$ENV_TYPE/* $TEMP_DIR/overlays/$ENV_TYPE/
+      
+      # Save paths for later steps
+      echo "export SERVICE_DIR=$SERVICE_DIR" >> ~/.devspace/vars/temp_dir.env
+      echo "export BASE_DIR=$BASE_DIR" >> ~/.devspace/vars/temp_dir.env
+      
+      # Replace in all yaml files
+      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/${NAMESPACE}/g" {} \;
+      
+      # Create the namespace if it doesn't exist
+      kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+      
+      echo "Prepared Kubernetes manifests in $TEMP_DIR with namespace: ${NAMESPACE}"
+  
+  # Apply the prepared manifests
+  apply-manifests:
+    run: |
+      source ~/.devspace/vars/temp_dir.env
+      source ~/.devspace/vars/env_type.env
+      kubectl apply -k $TEMP_DIR/overlays/$ENV_TYPE/$SERVICE_DIR
+      
+      # Handle Istio Gateway for Azure environment
+      if [[ "$ENV_TYPE" == "azure" ]]; then
+        # Check if the Istio Gateway exists in the aks-istio-ingress namespace
+        GATEWAY_EXISTS=$(kubectl get gateway -n aks-istio-ingress store-ui-gateway -o name --ignore-not-found)
+        
+        if [ -z "$GATEWAY_EXISTS" ]; then
+          echo "Creating Istio Gateway in aks-istio-ingress namespace"
+          # Apply the Gateway configuration separately since it's in a different namespace
+          GATEWAY_FILE="${BASE_DIR}/overlays/azure/store-ui/store-ui-gateway.yaml"
+          if [ -f "$GATEWAY_FILE" ]; then
+            kubectl apply -f "$GATEWAY_FILE"
+          fi
+        else
+          echo "Istio Gateway already exists in aks-istio-ingress namespace"
+        fi
+      fi
+  
+  # Delete the prepared manifests
+  delete-manifests:
+    run: |
+      source ~/.devspace/vars/temp_dir.env
+      source ~/.devspace/vars/env_type.env
+      kubectl delete -k $TEMP_DIR/overlays/$ENV_TYPE/$SERVICE_DIR --ignore-not-found
+  
+  # Clean up the temporary directory
+  cleanup:
+    run: |
+      source ~/.devspace/vars/temp_dir.env
+      rm -rf $TEMP_DIR
+      echo "Cleaned up temporary directory"
+
+# Standardized commands for consistency across all microservices
+commands:
+  # Development commands
+  dev:
+    command: devspace use namespace ${NAMESPACE} && devspace dev --skip-build --skip-deploy
+    description: "Start development mode with hot reload"
+  
+  # Core deployment commands  
+  deploy:
+    command: |
+      mkdir -p ~/.devspace/vars
+      # Set environment variables for pipelines
+      echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
+      echo "export K8S_PATH=${K8S_MANIFEST_PATH_LOCAL}" > ~/.devspace/vars/k8s_path.env
+      
+      # Run pipelines
+      devspace run-pipeline prepare-manifests
+      devspace run-pipeline apply-manifests
+      devspace run-pipeline cleanup
+    description: "Deploy to local environment with dynamic namespace"
+  
+  build:
+    command: devspace build
+    description: "Build image for local registry"
+  
+  purge:
+    command: |
+      mkdir -p ~/.devspace/vars
+      # Set environment variables for pipelines
+      echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
+      echo "export K8S_PATH=${K8S_MANIFEST_PATH_LOCAL}" > ~/.devspace/vars/k8s_path.env
+      
+      # Run pipelines
+      devspace run-pipeline prepare-manifests
+      devspace run-pipeline delete-manifests
+      devspace run-pipeline cleanup
+    description: "Remove deployment from cluster"
+  
+  # Azure profile commands
+  deploy-azure:
+    command: |
+      mkdir -p ~/.devspace/vars
+      # Set environment variables for pipelines
+      echo "export ENV_TYPE=azure" > ~/.devspace/vars/env_type.env
+      echo "export K8S_PATH=${K8S_MANIFEST_PATH_AZURE}" > ~/.devspace/vars/k8s_path.env
+      
+      # Run pipelines
+      devspace run-pipeline prepare-manifests
+      devspace run-pipeline apply-manifests
+      devspace run-pipeline cleanup
+    description: "Deploy to Azure with dynamic namespace"
+  
+  build-azure:
+    command: devspace build --profile azure
+    description: "Build image for Azure ACR"
+  
+  dev-azure:
+    command: devspace use namespace ${NAMESPACE} && devspace dev --skip-build --skip-deploy --profile azure
+    description: "Start development mode with Azure profile"
+  
+  purge-azure:
+    command: |
+      mkdir -p ~/.devspace/vars
+      # Set environment variables for pipelines
+      echo "export ENV_TYPE=azure" > ~/.devspace/vars/env_type.env
+      echo "export K8S_PATH=${K8S_MANIFEST_PATH_AZURE}" > ~/.devspace/vars/k8s_path.env
+      
+      # Run pipelines
+      devspace run-pipeline prepare-manifests
+      devspace run-pipeline delete-manifests
+      devspace run-pipeline cleanup
+    description: "Remove Azure deployment from cluster"
+
+# Azure ACR profile for Kubernetes
+profiles:
+  - name: azure
+    description: "Azure ACR for Kubernetes deployment"
+    patches:
+      - op: replace
+        path: vars.REGISTRY
+        value: ${AZURE_REGISTRY}
+    activation:
+      - vars:
+          DEVSPACE_PROFILE: "azure"
