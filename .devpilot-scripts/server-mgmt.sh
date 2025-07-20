@@ -13,8 +13,6 @@ checkDevSpaceInstalled(){
 }
 
 setup_server(){
-    echo "🛠️ Setting up dev server..."
-    
     checkDevSpaceInstalled
     
     # TODO: Complex logic - implement manually
@@ -26,8 +24,6 @@ setup_server(){
 }
 
 run_server(){
-    echo "🚀 Starting dev server..."
-    
     local profile=""
     local namespace=""
     
@@ -76,8 +72,6 @@ run_server(){
 }
 
 debug_server(){
-    echo "🐛 Starting dev server in debug mode..."
-    
     local profile=""
     local namespace=""
     local debug_port=""
@@ -146,8 +140,6 @@ debug_server(){
 }
 
 build_server(){
-    echo "🔨 Building server images..."
-    
     local profile=""
     local tag=""
     local skip_push=false
@@ -196,17 +188,13 @@ build_server(){
     eval $cmd
     local exit_code=$?
     
-    if [[ $exit_code -eq 0 ]]; then
-        echo "✅ Server images built successfully"
-    else
+    if [[ $exit_code -ne 0 ]]; then
         echo "❌ Server image build failed"
         exit $exit_code
     fi
 }
 
 deploy_server(){
-    echo "🚀 Deploying server to cluster..."
-    
     local profile=""
     local namespace=""
     local skip_build=false
@@ -255,17 +243,13 @@ deploy_server(){
     eval $cmd
     local exit_code=$?
     
-    if [[ $exit_code -eq 0 ]]; then
-        echo "✅ Server deployed successfully"
-    else
+    if [[ $exit_code -ne 0 ]]; then
         echo "❌ Server deployment failed"
         exit $exit_code
     fi
 }
 
 test_server(){
-    echo "🧪 Testing server..."
-    
     local profile=""
     local pipeline="test-server"
     
@@ -301,8 +285,6 @@ test_server(){
 }
 
 get_logs(){
-    echo "📋 Getting server logs..."
-    
     local service=""
     local follow=false
     local lines=""
@@ -359,8 +341,6 @@ get_logs(){
 }
 
 open_shell(){
-    echo "🐚 Opening shell in server container..."
-    
     local service=""
     local container=""
     
@@ -407,18 +387,59 @@ open_shell(){
 }
 
 get_status(){
-    echo "📊 Checking server status..."
-    
     checkDevSpaceInstalled
     
     local cmd="devspace list deployments"
     eval $cmd
     local exit_code=$?
     
-    if [[ $exit_code -eq 0 ]]; then
-        echo "✅ Server status retrieved"
-    else
+    if [[ $exit_code -ne 0 ]]; then
         echo "❌ Failed to get server status"
+        exit $exit_code
+    fi
+}
+
+stop_server(){
+    local profile=""
+    local namespace=""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --profile)
+                profile="$2"
+                shift 2
+                ;;
+            --namespace)
+                namespace="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    checkDevSpaceInstalled
+    
+    local cmd="devspace purge"
+    
+    if [[ -n "$profile" ]]; then
+        cmd="$cmd --profile $profile"
+        echo "📋 Using profile: $profile"
+    fi
+    
+    if [[ -n "$namespace" ]]; then
+        cmd="$cmd --namespace $namespace"
+        echo "🎯 Target namespace: $namespace"
+    fi
+    
+    echo "🔄 Executing: $cmd"
+    eval $cmd
+    local exit_code=$?
+    
+    if [[ $exit_code -ne 0 ]]; then
+        echo "❌ Failed to stop server"
         exit $exit_code
     fi
 }
@@ -456,9 +477,12 @@ main(){
         "--status")
             get_status "$@"
             ;;
+        "--stop-server")
+            stop_server "$@"
+            ;;
         *)
             echo "Invalid option: $action"
-            echo "Available options: --setup-server, --run-server, --debug-server, --build-server, --deploy-server, --test-server, --logs, --shell, --status"
+            echo "Available options: --setup-server, --run-server, --debug-server, --build-server, --deploy-server, --test-server, --logs, --shell, --status, --stop-server"
             exit 1
             ;;
     esac
