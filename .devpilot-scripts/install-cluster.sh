@@ -16,6 +16,10 @@
 # Exit on any error
 set -e
 
+# Get the script directory and project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 # Configuration - support both interactive and non-interactive modes
 if [[ -n "$1" ]]; then
   cluster_name="$1"
@@ -32,7 +36,7 @@ fi
 registry_name="kind-registry"
 registry_port="5001"        # Registry port
 registry_ui_port="9080"     # Changed UI port to avoid conflict with port 8080
-kind_config_path="./kind-cluster-config.yaml"
+kind_config_path="$SCRIPT_DIR/kind-cluster-config.yaml"
 
 echo "📛 Setting up development environment"
 
