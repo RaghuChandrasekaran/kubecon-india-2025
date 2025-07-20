@@ -109,12 +109,20 @@ fi
 
 # Check if registry is running
 write_phase "Checking Local Registry"
+# Check for either the old kind-registry or the new dev-harbor container
 registry_container=$(docker ps --filter "name=kind-registry" --format "{{.Names}}")
-if [[ -z "$registry_container" ]]; then
+harbor_container=$(docker ps --filter "name=dev-harbor" --format "{{.Names}}")
+
+if [[ -z "$registry_container" && -z "$harbor_container" ]]; then
   write_warning "Local registry is not running! Please run setup-kind.sh first."
   exit 1
 fi
-write_success "Local registry is running at $registry_url"
+
+if [[ -n "$harbor_container" ]]; then
+  write_success "Harbor registry is running at $registry_url"
+else
+  write_success "Local registry is running at $registry_url"
+fi
 
 # Process each service
 for service_info in "${services[@]}"; do

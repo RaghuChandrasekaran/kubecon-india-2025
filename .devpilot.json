@@ -6,19 +6,19 @@
   "mono_repo": "yes",
   "services": [
     {
-      "name": "users_cna",
+      "name": "users",
       "location": "users-cna-microservice"
     },
     {
-      "name": "search_cna",
+      "name": "search",
       "location": "search-cna-microservice"
     },
     {
-      "name": "products_cna",
+      "name": "products",
       "location": "products-cna-microservice"
     },
     {
-      "name": "cart_cna",
+      "name": "cart",
       "location": "cart-cna-microservice"
     },
     {

@@ -50,7 +50,7 @@ run_server(){
     
     checkDevSpaceInstalled
     
-    local cmd="devspace dev"
+    local cmd="devspace run dev"
     
     if [[ -n "$profile" ]]; then
         cmd="$cmd --profile $profile"
@@ -110,7 +110,7 @@ debug_server(){
     
     checkDevSpaceInstalled
     
-    local cmd="devspace dev"
+    local cmd="devspace run dev"
     
     if [[ -n "$profile" ]]; then
         cmd="$cmd --profile $profile"
@@ -175,7 +175,7 @@ build_server(){
     
     checkDevSpaceInstalled
     
-    local cmd="devspace build"
+    local cmd="devspace run build"
     
     if [[ -n "$profile" ]]; then
         cmd="$cmd --profile $profile"
@@ -234,7 +234,7 @@ deploy_server(){
     
     checkDevSpaceInstalled
     
-    local cmd="devspace deploy"
+    local cmd="devspace run deploy"
     
     if [[ -n "$profile" ]]; then
         cmd="$cmd --profile $profile"
