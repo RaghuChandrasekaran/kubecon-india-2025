@@ -115,3 +115,30 @@ if [ "$MODE" == "app" ] || [ "$MODE" == "both" ]; then
 fi
 
 write_success "Environment setup completed successfully!"
+
+echo -e "\n\033[1;45m                                                               \033[0m"
+echo -e "\033[1;45m  🌐 E-Commerce Application Services                            \033[0m"
+echo -e "\033[1;45m                                                               \033[0m\n"
+
+echo -e "\033[1;36m🛍️  Storefront UI:\033[0m"
+echo -e "   \033[1;92mhttp://localhost:8084/\033[0m"
+echo -e "   \033[0;90m└─ The main user interface for the e-commerce platform\033[0m"
+
+echo -e "\n\033[1;36m👤 Users Service API:\033[0m"
+echo -e "   \033[1;92mhttp://localhost:9090/docs\033[0m"
+echo -e "   \033[0;90m└─ User management, authentication and profiles\033[0m"
+
+echo -e "\n\033[1;36m📦 Products Service API:\033[0m"
+echo -e "   \033[1;92mhttp://localhost:8081/api-docs/\033[0m"
+echo -e "   \033[0;90m└─ Product catalog, inventory and pricing\033[0m"
+
+echo -e "\n\033[1;36m🛒 Cart Service API:\033[0m"
+echo -e "   \033[1;92mhttp://localhost:8080/swagger-ui.html\033[0m"
+echo -e "   \033[0;90m└─ Shopping cart management and checkout process\033[0m"
+
+echo -e "\n\033[1;36m🔍 Search Service API:\033[0m"
+echo -e "   \033[1;92mhttp://localhost:8082/api/docs\033[0m"
+echo -e "   \033[0;90m└─ Product search and filtering functionality\033[0m"
+
+echo -e "\n\033[1;33m📝 Note:\033[0m These services will be available after you deploy the applications to the cluster"
+echo -e "\033[1;33m      or start them individually using their respective devspace_start.sh scripts.\033[0m"
