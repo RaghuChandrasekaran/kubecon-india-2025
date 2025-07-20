@@ -1,19 +1,16 @@
 version: v2beta1
 name: search
 
-images:
-  search:
-    image: image.registry.local:5001/search
-    dockerfile: ./Dockerfile
-    tags:
-    - latest
+imports:
+  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
-deployments:
-  search:
-    kubectl:
-      manifests:
-        - ../infra/k8s/apps/overlays/local/search/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "search"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/search/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/search/"
 
 dev:
   search:
@@ -34,20 +31,8 @@ dev:
       command: ./devspace_start.sh
     ports:
       - port: "4000"
-    open:
-      - url: http://localhost:4000
     env:
       - name: NODE_ENV
         value: "development"
       - name: ELASTIC_URL
         value: "http://localhost:9200/"
-
-commands:
-  start:
-    command: devspace enter search -- npm start
-  build:
-    command: devspace enter search -- npm run build
-  test:
-    command: devspace enter search -- npm test
-  install:
-    command: devspace enter search -- npm install

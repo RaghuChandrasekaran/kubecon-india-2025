@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: NAMESPACE_PLACEHOLDER
+
+resources:
+- ../../../base/products
+- products-vs.yaml
+
+images:
+- name: products:latest
+  newName: kubecondemo.azurecr.io/products
+  newTag: latest

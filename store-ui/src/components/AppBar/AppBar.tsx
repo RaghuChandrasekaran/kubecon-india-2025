@@ -24,7 +24,8 @@ import {
   alpha,
   Collapse,
   Fade,
-  Zoom
+  Zoom,
+  Chip
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import {
@@ -44,7 +45,8 @@ import {
   Storefront as StorefrontIcon,
   Phone as PhoneIcon,
   Help as HelpIcon,
-  LocalShipping as LocalShippingIcon
+  LocalShipping as LocalShippingIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../layout/CartContext';
@@ -54,27 +56,24 @@ import ThemeContext from '../layout/ThemeContext';
 // Styled components
 const StyledAppBar = styled(MuiAppBar)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
-  backgroundColor: alpha(theme.palette.background.paper, 0.9),
-  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+  backgroundColor: '#263238', // Dark navy/gray color from screenshot
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
   borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  color: theme.palette.text.primary,
+  color: '#FFFFFF',
   transition: 'all 0.3s ease'
 }));
 
 const Logo = styled(Typography)(({ theme }) => ({
-  fontWeight: 700,
+  fontWeight: 600,
   letterSpacing: '0.5px',
-  background: theme.palette.mode === 'dark' 
-    ? 'linear-gradient(45deg, #f06, #3cf)' 
-    : 'linear-gradient(45deg, #3f51b5, #f50057)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  fontSize: '1.5rem',
+  color: '#FF9800', // Orange color from the screenshot
+  fontSize: '1.4rem',
   display: 'flex',
   alignItems: 'center',
-  textTransform: 'uppercase'
+  cursor: 'pointer'
 }));
 
+// Add keyboard focus styles to NavLink
 const NavLink = styled(Button)(({ theme }) => ({
   textTransform: 'none',
   fontWeight: 500,
@@ -91,8 +90,12 @@ const NavLink = styled(Button)(({ theme }) => ({
     transition: 'all 0.3s ease',
     transform: 'translateX(-50%)',
   },
-  '&:hover::after': {
+  '&:hover::after, &:focus-visible::after': {
     width: '70%',
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: '2px',
   }
 }));
 
@@ -136,10 +139,15 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+// Add keyboard focus styles to ProfileButton
 const ProfileButton = styled(IconButton)(({ theme }) => ({
   transition: 'transform 0.2s ease',
   '&:hover': {
     transform: 'scale(1.05)',
+  },
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: '2px',
   }
 }));
 
@@ -189,6 +197,15 @@ const MenuButton = styled(Button)(({ theme }) => ({
   }
 }));
 
+// Enhance the ListItemButton keyboard accessibility
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  '&:focus-visible': {
+    outline: `2px solid ${theme.palette.primary.main}`,
+    outlineOffset: '-2px',
+    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+  }
+}));
+
 const AppBar = () => {
   const navigate = useNavigate();
   const { cartCount } = useCart();
@@ -213,6 +230,13 @@ const AppBar = () => {
   // Category collapse states
   const [openCategories, setOpenCategories] = useState(false);
   const [openHelp, setOpenHelp] = useState(false);
+  
+  // Add this at the beginning of the component
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+  
+  // Add state for screen reader announcements
+  const [announcement, setAnnouncement] = useState('');
   
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -264,29 +288,105 @@ const AppBar = () => {
     { name: 'FAQ', path: '/help/faq' }
   ];
 
+  // Add keyboard shortcut for search focus
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Focus search input when user presses '/' key
+      if (event.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        setAnnouncement('Search box is now focused. Type to search products.');
+      }
+      
+      // Add shortcut to go to cart (c key)
+      if (event.key === 'c' && (event.ctrlKey || event.metaKey) && document.activeElement?.tagName !== 'INPUT') {
+        event.preventDefault();
+        navigate('/cart');
+        setAnnouncement('Navigated to shopping cart');
+      }
+      
+      // Add shortcut to go to home (h key)
+      if (event.key === 'h' && (event.ctrlKey || event.metaKey) && document.activeElement?.tagName !== 'INPUT') {
+        event.preventDefault();
+        navigate('/');
+        setAnnouncement('Navigated to home page');
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [navigate]);
+  
+  // Clear announcement after it's been read
+  useEffect(() => {
+    if (announcement) {
+      const timer = setTimeout(() => {
+        setAnnouncement('');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [announcement]);
+  
+  // Handle search submission
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+      setDrawerOpen(false);
+    }
+  };
+
   const renderMobileDrawer = () => (
     <MobileDrawer
       anchor="left"
       open={drawerOpen}
       onClose={toggleDrawer(false)}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navigation menu"
     >
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          mb: 2,
+          alignItems: 'center'
+        }}>
           <Logo variant="h6" onClick={() => handleNavigation('/')}>
             EShop
           </Logo>
+          <IconButton 
+            onClick={toggleDrawer(false)}
+            size="small"
+            aria-label="Close menu"
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
         
         <Divider sx={{ mb: 2 }} />
         
         {isLoggedIn && (
-          <Box sx={{ display: 'flex', alignItems: 'center', p: 1.5, mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.1), borderRadius: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            p: 1.5, 
+            mb: 2, 
+            bgcolor: alpha(theme.palette.primary.main, 0.1), 
+            borderRadius: 1 
+          }}>
             <Avatar 
               sx={{ 
                 bgcolor: 'primary.main',
                 color: 'white',
                 fontWeight: 'bold',
-                mr: 2
+                mr: 2,
+                width: 32,
+                height: 32
               }}
             >
               {getInitial()}
@@ -302,133 +402,153 @@ const AppBar = () => {
           </Box>
         )}
         
-        <List component="nav" sx={{ flexGrow: 1 }}>
+        <List component="nav" sx={{ flexGrow: 1, px: 0 }} aria-label="Main Navigation">
           <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigation('/')}>
+            <StyledListItemButton 
+              onClick={() => handleNavigation('/')} 
+              aria-label="Home page"
+              sx={{ py: 1 }}
+            >
               <ListItemIcon>
                 <HomeIcon />
               </ListItemIcon>
               <ListItemText primary="Home" />
-            </ListItemButton>
+            </StyledListItemButton>
           </ListItem>
           
           <ListItem disablePadding>
-            <ListItemButton onClick={() => setOpenCategories(!openCategories)}>
+            <StyledListItemButton 
+              onClick={() => setOpenCategories(!openCategories)}
+              aria-expanded={openCategories}
+              aria-controls="categories-submenu"
+              sx={{ py: 1 }}
+            >
               <ListItemIcon>
                 <StorefrontIcon />
               </ListItemIcon>
               <ListItemText primary="Shop by Category" />
-              {openCategories ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
+              {openCategories ? <ExpandLessIcon aria-hidden="true" /> : <ExpandMoreIcon aria-hidden="true" />}
+            </StyledListItemButton>
           </ListItem>
           
-          <Collapse in={openCategories} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
+          <Collapse in={openCategories} timeout="auto" unmountOnExit id="categories-submenu">
+            <List component="div" disablePadding aria-label="Categories">
               {categories.map((category) => (
                 <ListItem key={category.name} disablePadding>
-                  <ListItemButton 
-                    sx={{ pl: 4 }}
+                  <StyledListItemButton 
+                    sx={{ pl: 4, py: 1 }}
                     onClick={() => handleNavigation(category.path)}
+                    aria-label={`Browse ${category.name} category`}
                   >
                     <ListItemText primary={category.name} />
-                  </ListItemButton>
+                  </StyledListItemButton>
                 </ListItem>
               ))}
             </List>
           </Collapse>
-          
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => setOpenHelp(!openHelp)}>
-              <ListItemIcon>
-                <HelpIcon />
-              </ListItemIcon>
-              <ListItemText primary="Help & Support" />
-              {openHelp ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </ListItemButton>
-          </ListItem>
-          
-          <Collapse in={openHelp} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              {helpLinks.map((link) => (
-                <ListItem key={link.name} disablePadding>
-                  <ListItemButton 
-                    sx={{ pl: 4 }}
-                    onClick={() => handleNavigation(link.path)}
-                  >
-                    <ListItemText primary={link.name} />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Collapse>
-          
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => handleNavigation('/contact')}>
-              <ListItemIcon>
-                <PhoneIcon />
-              </ListItemIcon>
-              <ListItemText primary="Contact Us" />
-            </ListItemButton>
-          </ListItem>
           
           {isLoggedIn ? (
             <>
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavigation('/profile')}>
+                <StyledListItemButton 
+                  onClick={() => handleNavigation('/profile')}
+                  sx={{ py: 1 }}
+                >
                   <ListItemIcon>
                     <PersonIcon />
                   </ListItemIcon>
                   <ListItemText primary="My Profile" />
-                </ListItemButton>
+                </StyledListItemButton>
               </ListItem>
               
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavigation('/orders')}>
+                <StyledListItemButton 
+                  onClick={() => handleNavigation('/orders')}
+                  sx={{ py: 1 }}
+                >
                   <ListItemIcon>
                     <LocalShippingIcon />
                   </ListItemIcon>
                   <ListItemText primary="My Orders" />
-                </ListItemButton>
+                </StyledListItemButton>
+              </ListItem>
+              
+              <ListItem disablePadding>
+                <StyledListItemButton 
+                  onClick={() => handleNavigation('/cart')}
+                  sx={{ py: 1 }}
+                >
+                  <ListItemIcon>
+                    <ShoppingCartIcon />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>My Cart</span>
+                        {cartCount > 0 && (
+                          <Chip 
+                            label={cartCount} 
+                            size="small" 
+                            color="error" 
+                            sx={{ height: 20, fontSize: '0.75rem' }} 
+                          />
+                        )}
+                      </Box>
+                    } 
+                  />
+                </StyledListItemButton>
               </ListItem>
               
               {user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin' ? (
                 <ListItem disablePadding>
-                  <ListItemButton onClick={() => handleNavigation('/admin')}>
+                  <StyledListItemButton 
+                    onClick={() => handleNavigation('/admin')}
+                    sx={{ py: 1 }}
+                  >
                     <ListItemIcon>
                       <AdminPanelSettings />
                     </ListItemIcon>
                     <ListItemText primary="Admin Dashboard" />
-                  </ListItemButton>
+                  </StyledListItemButton>
                 </ListItem>
               ) : null}
               
               <ListItem disablePadding>
-                <ListItemButton onClick={handleLogout}>
+                <StyledListItemButton 
+                  onClick={handleLogout}
+                  sx={{ py: 1 }}
+                >
                   <ListItemIcon>
                     <Logout />
                   </ListItemIcon>
                   <ListItemText primary="Logout" />
-                </ListItemButton>
+                </StyledListItemButton>
               </ListItem>
             </>
           ) : (
             <>
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavigation('/login')}>
+                <StyledListItemButton 
+                  onClick={() => handleNavigation('/login')}
+                  sx={{ py: 1 }}
+                >
                   <ListItemIcon>
                     <PersonIcon />
                   </ListItemIcon>
                   <ListItemText primary="Login" />
-                </ListItemButton>
+                </StyledListItemButton>
               </ListItem>
               
               <ListItem disablePadding>
-                <ListItemButton onClick={() => handleNavigation('/register')}>
+                <StyledListItemButton 
+                  onClick={() => handleNavigation('/register')}
+                  sx={{ py: 1 }}
+                >
                   <ListItemIcon>
                     <PersonIcon />
                   </ListItemIcon>
                   <ListItemText primary="Sign Up" />
-                </ListItemButton>
+                </StyledListItemButton>
               </ListItem>
             </>
           )}
@@ -450,371 +570,339 @@ const AppBar = () => {
   );
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <StyledAppBar position="sticky">
-        <Container maxWidth="xl">
-          <Toolbar sx={{ py: { xs: 1, md: 0.5 } }}>
-            {isMobile && (
+    <StyledAppBar position="sticky" aria-label="Main navigation">
+      {/* Add live region for screen reader announcements */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {announcement}
+      </div>
+      
+      <Container maxWidth="xl" disableGutters={isMobile}>
+        <Toolbar 
+          disableGutters 
+          sx={{ 
+            minHeight: isMobile ? 48 : 64,
+            px: isMobile ? 1 : 2 
+          }}
+        >
+          {isMobile ? (
+            <>
               <IconButton
-                color="inherit"
-                aria-label="open drawer"
+                size="small"
                 edge="start"
+                color="inherit"
+                aria-label="Open navigation menu"
                 onClick={toggleDrawer(true)}
                 sx={{ mr: 1 }}
               >
                 <MenuIcon />
               </IconButton>
-            )}
-            
-            <Fade in={true} timeout={800}>
-              <Logo
-                variant="h6"
-                noWrap
-                sx={{ 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center'
+              
+              <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+                <Logo 
+                  variant="body1" 
+                  onClick={() => navigate('/')} 
+                  tabIndex={0} 
+                  role="button" 
+                  aria-label="Go to homepage"
+                  sx={{ fontSize: '1.25rem' }}
+                >
+                  EShop
+                </Logo>
+              </Box>
+              
+              <Box sx={{ display: 'flex' }}>
+                <IconButton 
+                  color="inherit" 
+                  onClick={() => navigate('/cart')}
+                  aria-label={`Shopping Cart with ${cartCount} items`}
+                  size="small"
+                  sx={{ ml: 0.5 }}
+                >
+                  <StyledBadge 
+                    badgeContent={cartCount} 
+                    color="error"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: '0.65rem',
+                        height: '16px',
+                        minWidth: '16px',
+                        padding: '0 4px'
+                      }
+                    }}
+                  >
+                    <ShoppingCartIcon fontSize="small" />
+                  </StyledBadge>
+                </IconButton>
+              </Box>
+            </>
+          ) : (
+            <>
+              <Logo 
+                variant="h6" 
+                onClick={() => navigate('/')} 
+                sx={{ mr: 2, cursor: 'pointer' }}
+                tabIndex={0}
+                role="button"
+                aria-label="Go to homepage"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/');
+                  }
                 }}
-                onClick={() => navigate('/')}
               >
                 EShop
               </Logo>
-            </Fade>
-            
-            {!isMobile && (
-              <>
-                <Box sx={{ ml: 4, display: 'flex', gap: 0.5 }}>
-                  <NavLink onClick={() => navigate('/')}>Home</NavLink>
-                  
-                  <Box sx={{ position: 'relative' }}>
-                    <NavLink
-                      endIcon={<ExpandMoreIcon />}
-                      onClick={() => setOpenCategories(!openCategories)}
-                    >
-                      Categories
-                    </NavLink>
-                    {openCategories && (
-                      <Fade in={openCategories} timeout={200}>
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            zIndex: 1000,
-                            minWidth: 180,
-                            bgcolor: 'background.paper',
-                            boxShadow: 3,
-                            borderRadius: 1,
-                            overflow: 'hidden',
-                            mt: 0.5
-                          }}
-                        >
-                          {categories.map((category) => (
-                            <MenuItem 
-                              key={category.name}
-                              onClick={() => {
-                                navigate(category.path);
-                                setOpenCategories(false);
-                              }}
-                              sx={{ py: 1.5 }}
-                            >
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </Box>
-                      </Fade>
-                    )}
-                  </Box>
-                  
-                  <NavLink onClick={() => navigate('/deals')}>Deals</NavLink>
-                  <NavLink onClick={() => navigate('/new-arrivals')}>New Arrivals</NavLink>
-                  
-                  <Box sx={{ position: 'relative' }}>
-                    <NavLink
-                      endIcon={<ExpandMoreIcon />}
-                      onClick={() => setOpenHelp(!openHelp)}
-                    >
-                      Help
-                    </NavLink>
-                    {openHelp && (
-                      <Fade in={openHelp} timeout={200}>
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            zIndex: 1000,
-                            minWidth: 180,
-                            bgcolor: 'background.paper',
-                            boxShadow: 3,
-                            borderRadius: 1,
-                            overflow: 'hidden',
-                            mt: 0.5
-                          }}
-                        >
-                          {helpLinks.map((link) => (
-                            <MenuItem 
-                              key={link.name}
-                              onClick={() => {
-                                navigate(link.path);
-                                setOpenHelp(false);
-                              }}
-                              sx={{ py: 1.5 }}
-                            >
-                              {link.name}
-                            </MenuItem>
-                          ))}
-                        </Box>
-                      </Fade>
-                    )}
-                  </Box>
-                </Box>
+              
+              <Box sx={{ flexGrow: 1, display: 'flex' }}>
+                <NavLink 
+                  onClick={() => navigate('/')}
+                  aria-label="Home page"
+                >
+                  Home
+                </NavLink>
                 
+                {/* Add keyboard accessibility to the menu items */}
+                {categories.map((category) => (
+                  <NavLink
+                    key={category.name}
+                    onClick={() => navigate(category.path)}
+                    aria-label={`Browse ${category.name} category`}
+                  >
+                    {category.name}
+                  </NavLink>
+                ))}
+              </Box>
+              
+              <form onSubmit={handleSearchSubmit} aria-label="Search products" role="search">
                 <SearchWrapper>
                   <SearchIconWrapper>
-                    <SearchIcon />
+                    <SearchIcon aria-hidden="true" />
                   </SearchIconWrapper>
                   <StyledInputBase
                     placeholder="Search products…"
-                    inputProps={{ 'aria-label': 'search' }}
+                    inputProps={{ 
+                      'aria-label': 'search products',
+                      ref: searchInputRef
+                    }}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {/* Add a tooltip to show the keyboard shortcut */}
+                  <Typography 
+                    variant="caption" 
+                    sx={{ opacity: 0.7, mr: 1 }}
+                    aria-hidden="true"
+                  >
+                    Press /
+                  </Typography>
                 </SearchWrapper>
-              </>
-            )}
-            
-            <Box sx={{ flexGrow: 1 }} />
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {!isMobile && (
-                <Tooltip title="Toggle theme">
+              </form>
+              
+              <Box sx={{ display: 'flex', ml: 1 }}>
+                <Tooltip title="Toggle dark/light mode" arrow>
                   <IconButton 
                     onClick={colorMode.toggleColorMode} 
                     color="inherit"
-                    sx={{ mr: 1 }}
+                    aria-label={`Switch to ${theme.palette.mode === 'dark' ? 'light' : 'dark'} mode`}
                   >
                     {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
                   </IconButton>
                 </Tooltip>
-              )}
-              
-              {/* Admin Users Icon - Only visible to admin users */}
-              {isLoggedIn && (user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin') && (
-                <Tooltip title="User Management">
+                
+                <Tooltip title="Favorites" arrow>
                   <IconButton 
-                    color="inherit" 
-                    onClick={() => navigate('/users')}
-                    sx={{ mr: 1 }}
+                    color="inherit"
+                    aria-label="View favorites"
+                    onClick={() => navigate('/favorites')}
                   >
-                    <AdminPanelSettings />
+                    <FavoriteIcon />
                   </IconButton>
                 </Tooltip>
-              )}
-              
-              <Tooltip title="Wishlist">
-                <IconButton color="inherit" onClick={() => navigate('/wishlist')}>
-                  <FavoriteIcon />
-                </IconButton>
-              </Tooltip>
-              
-              <Tooltip title="Shopping Cart">
-                <IconButton 
-                  color="inherit" 
-                  onClick={() => navigate('/cart')}
-                  sx={{ mx: 0.5 }}
-                >
-                  <StyledBadge badgeContent={cartCount} color="error">
-                    <ShoppingCartIcon />
-                  </StyledBadge>
-                </IconButton>
-              </Tooltip>
-              
-              {isLoggedIn ? (
-                <Box>
-                  <Tooltip title="Account settings">
-                    <ProfileButton
-                      onClick={handleProfileClick}
-                      aria-controls={open ? 'account-menu' : undefined}
-                      aria-haspopup="true"
-                      aria-expanded={open ? 'true' : undefined}
-                      sx={{
-                        ml: 1,
-                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.2),
-                        }
+                
+                <Tooltip title="Shopping Cart" arrow>
+                  <IconButton 
+                    color="inherit" 
+                    onClick={() => navigate('/cart')}
+                    aria-label={`Shopping Cart with ${cartCount} items`}
+                  >
+                    <StyledBadge badgeContent={cartCount} color="error">
+                      <ShoppingCartIcon />
+                    </StyledBadge>
+                  </IconButton>
+                </Tooltip>
+                
+                {isLoggedIn ? (
+                  <>
+                    <Tooltip title="Account settings" arrow>
+                      <ProfileButton
+                        onClick={handleProfileClick}
+                        aria-expanded={open ? 'true' : 'false'}
+                        aria-haspopup="true"
+                        aria-controls={open ? 'profile-menu' : undefined}
+                        aria-label="Open user account menu"
+                      >
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            width: 32, 
+                            height: 32 
+                          }}
+                        >
+                          {getInitial()}
+                        </Avatar>
+                      </ProfileButton>
+                    </Tooltip>
+                    <Menu
+                      id="profile-menu"
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      onClick={handleClose}
+                      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                      PaperProps={{
+                        elevation: 3,
+                        sx: {
+                          overflow: 'visible',
+                          filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+                          mt: 1.5,
+                          borderRadius: 2,
+                          minWidth: 180,
+                          '& .MuiMenuItem-root': {
+                            px: 2,
+                            py: 1.5,
+                            my: 0.25,
+                            borderRadius: 1,
+                          },
+                        },
                       }}
                     >
-                      <Avatar
-                        sx={{
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          width: 34,
-                          height: 34
-                        }}
+                      <MenuItem 
+                        onClick={() => navigate('/profile')}
+                        aria-label="View your profile"
                       >
-                        {getInitial()}
-                      </Avatar>
-                    </ProfileButton>
-                  </Tooltip>
-                  <Menu
-                    anchorEl={anchorEl}
-                    id="account-menu"
-                    open={open}
-                    onClose={handleClose}
-                    onClick={handleClose}
-                    PaperProps={{
-                      elevation: 3,
-                      sx: {
-                        overflow: 'visible',
-                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
-                        mt: 1.5,
-                        width: 220,
-                        borderRadius: 2,
-                        '& .MuiAvatar-root': {
-                          width: 32,
-                          height: 32,
-                          ml: -0.5,
-                          mr: 1,
-                        },
-                      },
-                    }}
-                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  >
-                    <Box sx={{ px: 2, py: 1.5 }}>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        {user?.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {user?.email}
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <MenuItem onClick={() => navigate('/profile')} sx={{ py: 1.5 }}>
-                      <ListItemIcon>
-                        <PersonIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="My Profile" />
-                    </MenuItem>
-                    <MenuItem onClick={() => navigate('/orders')} sx={{ py: 1.5 }}>
-                      <ListItemIcon>
-                        <LocalShippingIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="My Orders" />
-                    </MenuItem>
-                    {user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin' ? (
-                      <MenuItem onClick={() => navigate('/admin')} sx={{ py: 1.5 }}>
                         <ListItemIcon>
-                          <AdminPanelSettings fontSize="small" />
+                          <PersonIcon fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText primary="Admin Dashboard" />
+                        <ListItemText>Profile</ListItemText>
                       </MenuItem>
-                    ) : null}
-                    <MenuItem onClick={() => navigate('/settings')} sx={{ py: 1.5 }}>
-                      <ListItemIcon>
-                        <Settings fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Account Settings" />
-                    </MenuItem>
-                    <Divider />
-                    <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-                      <ListItemIcon>
-                        <Logout fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText primary="Logout" />
-                    </MenuItem>
-                  </Menu>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-                  {!isMobile && (
-                    <>
-                      <Button
-                        variant="text"
-                        onClick={() => navigate('/login')}
-                        sx={{
-                          mr: 1,
-                          color: 'text.primary',
-                          fontWeight: 500,
-                          textTransform: 'none'
-                        }}
+                      
+                      <MenuItem 
+                        onClick={() => navigate('/orders')}
+                        aria-label="View your orders"
                       >
-                        Login
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => navigate('/register')}
-                        sx={{
-                          borderRadius: '20px',
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          boxShadow: 2,
-                          px: 2
-                        }}
+                        <ListItemIcon>
+                          <LocalShippingIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Orders</ListItemText>
+                      </MenuItem>
+                      
+                      <MenuItem 
+                        onClick={() => navigate('/settings')}
+                        aria-label="View account settings"
                       >
-                        Sign Up
-                      </Button>
-                    </>
-                  )}
-                  {isMobile && (
-                    <IconButton
-                      color="inherit"
-                      onClick={() => navigate('/login')}
-                    >
-                      <PersonIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              )}
+                        <ListItemIcon>
+                          <Settings fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Settings</ListItemText>
+                      </MenuItem>
+                      
+                      {(user?.role === 'admin' || user?.role === 'ADMIN' || user?.role === 'Admin') && (
+                        <MenuItem 
+                          onClick={() => navigate('/admin')}
+                          aria-label="Go to admin dashboard"
+                        >
+                          <ListItemIcon>
+                            <AdminPanelSettings fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText>Admin Panel</ListItemText>
+                        </MenuItem>
+                      )}
+                      
+                      <Divider />
+                      
+                      <MenuItem 
+                        onClick={handleLogout}
+                        aria-label="Log out of your account"
+                      >
+                        <ListItemIcon>
+                          <Logout fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText>Logout</ListItemText>
+                      </MenuItem>
+                    </Menu>
+                  </>
+                ) : (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate('/login')}
+                    sx={{ ml: 1 }}
+                    aria-label="Log in to your account"
+                  >
+                    Login
+                  </Button>
+                )}
+              </Box>
+            </>
+          )}
+        </Toolbar>
+      </Container>
+      
+      {/* Mobile drawer */}
+      {renderMobileDrawer()}
+      
+      {/* Add keyboard shortcuts help dialog */}
+      <Box sx={{ position: 'fixed', bottom: 0, right: 0, zIndex: 100, p: 2 }}>
+        <Tooltip
+          title={
+            <Box component="ul" sx={{ pl: 2, m: 0 }}>
+              <Typography variant="subtitle2" gutterBottom>Keyboard Shortcuts:</Typography>
+              <li>/ - Focus search</li>
+              <li>Ctrl+H - Home page</li>
+              <li>Ctrl+C - Cart page</li>
             </Box>
-          </Toolbar>
-        </Container>
-      </StyledAppBar>
-      
-      {isMobile && renderMobileDrawer()}
-      
-      {/* Optional secondary navbar for categories on desktop */}
-      {!isMobile && (
-        <Box 
-          sx={{ 
-            bgcolor: alpha(theme.palette.primary.main, 0.05),
-            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-            display: 'flex',
-            justifyContent: 'center'
-          }}
+          }
+          arrow
+          placement="top-end"
         >
-          <Container maxWidth="xl">
-            <Box sx={{ display: 'flex', py: 0.5, overflowX: 'auto' }}>
-              {categories.map((category) => (
-                <Button
-                  key={category.name}
-                  sx={{
-                    color: 'text.secondary',
-                    mx: 1,
-                    py: 0.5,
-                    minWidth: 'auto',
-                    fontWeight: 500,
-                    fontSize: '0.875rem',
-                    textTransform: 'none',
-                    whiteSpace: 'nowrap',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                      color: 'primary.main'
-                    }
-                  }}
-                  onClick={() => navigate(category.path)}
-                >
-                  {category.name}
-                </Button>
-              ))}
-            </Box>
-          </Container>
-        </Box>
-      )}
-    </Box>
+          <IconButton 
+            size="small" 
+            sx={{ 
+              backgroundColor: alpha(theme.palette.background.paper, 0.8),
+              boxShadow: 1,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.background.paper, 0.95),
+              }
+            }}
+            aria-label="Keyboard shortcuts help"
+          >
+            <Typography variant="caption" sx={{ fontWeight: 'bold' }}>?</Typography>
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </StyledAppBar>
   );
 };
+
+// Add CSS for screen reader only content
+const style = document.createElement('style');
+style.textContent = `
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+`;
+document.head.appendChild(style);
 
 export default AppBar;

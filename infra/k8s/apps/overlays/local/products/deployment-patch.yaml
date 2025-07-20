@@ -3,7 +3,13 @@ kind: Deployment
 metadata:
   name: products-deployment
 spec:
+  selector:
+    matchLabels:
+      app: products-deployment
   template:
+    metadata:
+      labels:
+        app: products-deployment
     spec:
       containers:
       - name: products

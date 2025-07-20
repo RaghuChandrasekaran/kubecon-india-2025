@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: NAMESPACE_PLACEHOLDER
+
+resources:
+- ../../../base/store-ui
+- store-ui-gateway.yaml
+- store-ui-vs.yaml
+
+images:
+- name: store-ui:latest
+  newName: kubecondemo.azurecr.io/store-ui
+  newTag: latest
+
+configMapGenerator:
+- behavior: create
+  literals:
+  # Use the Istio Gateway URL for browser-based API calls
+  - REACT_APP_PRODUCTS_URL_BASE=/api/products/
+  - REACT_APP_CART_URL_BASE=/api/cart/
+  - REACT_APP_SEARCH_URL_BASE=/api/search/
+  - REACT_APP_USERS_URL_BASE=/api/users/
+  name: store-ui-configmap
+generatorOptions:
+  disableNameSuffixHash: true

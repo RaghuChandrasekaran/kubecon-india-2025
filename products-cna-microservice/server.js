@@ -58,16 +58,22 @@ loadData = () => {
   });
 }
 
-// perform a database connection when the server starts
-dbo.connectToServer(function (err) {
-  if (err) {
-    console.error(err);
-    process.exit();
-  }
+// Only connect to the database and start the server if this file is run directly
+if (require.main === module) {
+  // perform a database connection when the server starts
+  dbo.connectToServer(function (err) {
+    if (err) {
+      console.error(err);
+      process.exit();
+    }
 
-  // start the Express server
-  app.listen(PORT, () => {
-    console.log(`Server is running on port: ${PORT}`);
-    loadData()
+    // start the Express server
+    app.listen(PORT, () => {
+      console.log(`Server is running on port: ${PORT}`);
+      loadData()
+    });
   });
-});
+}
+
+// Export the app for testing
+module.exports = { app, loadData };

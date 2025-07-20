@@ -1,19 +1,16 @@
 version: v2beta1
 name: users
 
-images:
-  users:
-    image: image.registry.local:5001/users
-    dockerfile: ./Dockerfile
-    tags:
-    - latest
+imports:
+  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
-deployments:
-  users:
-    kubectl:
-      manifests:
-        - ../infra/k8s/apps/overlays/local/users/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "users"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/users/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/users/"
 
 dev:
   users:
@@ -29,6 +26,7 @@ dev:
           - "*.pyc"
           - .pytest_cache/
           - .git/
+          - "*.log"
         initialSync: preferLocal
         printLogs: true
     terminal:

@@ -1,17 +1,16 @@
 version: v2beta1
 name: store-ui
 
-images:
-  store-ui:
-    image: image.registry.local:5001/store-ui
-    dockerfile: ./Dockerfile
+imports:
+  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
-deployments:
-  store-ui:
-    kubectl:
-      manifests:
-        - ../infra/k8s/apps/overlays/local/store-ui/
-      kustomize: true
+vars:
+  SERVICE_NAME:
+    default: "store-ui"
+  K8S_MANIFEST_PATH_LOCAL:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/store-ui/"
+  K8S_MANIFEST_PATH_AZURE:
+    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/store-ui/"
 
 dev:
   store-ui:
@@ -48,14 +47,3 @@ dev:
         value: "http://localhost:8082/"
       - name: REACT_APP_USERS_URL_BASE
         value: "http://localhost:8083/"
-
-
-commands:
-  start:
-    command: devspace enter store-ui -- npm start
-  build:
-    command: devspace enter store-ui -- npm run build
-  test:
-    command: devspace enter store-ui -- npm test
-  install:
-    command: devspace enter store-ui -- npm install
