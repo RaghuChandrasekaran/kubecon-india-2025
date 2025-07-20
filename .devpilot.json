@@ -22,7 +22,7 @@
       "location": "cart-cna-microservice"
     },
     {
-      "name": "store_ui",
+      "name": "store-ui",
       "location": "store-ui"
     }
   ],
