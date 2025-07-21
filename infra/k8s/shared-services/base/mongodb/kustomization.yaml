@@ -6,4 +6,3 @@ resources:
   - statefulset.yaml
   - secret.yaml
   - mongo-pv.yaml
-  - mongo-pvc.yaml
