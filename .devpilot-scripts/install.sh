@@ -41,12 +41,31 @@ fi
 # Parse command line arguments
 MODE="both"
 PARAMS=()
+ENVIRONMENT="local"  # Default environment
 
 while (( "$#" )); do
   case "$1" in
     --infra) MODE="infra"; shift ;;
     --app) MODE="app"; shift ;;
-    *) PARAMS+=("$1"); shift ;;
+    --profile) 
+      if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+        ENVIRONMENT="$2"
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    *) 
+      # Check if this might be a profile name without the --profile flag
+      if [[ "$1" == "local" || "$1" == "azure" || "$1" == "dev" ]]; then
+        ENVIRONMENT="$1"
+        shift
+      else
+        PARAMS+=("$1")
+        shift
+      fi
+      ;;
   esac
 done
 
@@ -56,7 +75,7 @@ set -- "${PARAMS[@]}"
 # Use current username as default namespace
 DEFAULT_NAMESPACE=$(echo "$USER" | tr '.' '-')
 USER_NAMESPACE=${1:-$DEFAULT_NAMESPACE}
-ENVIRONMENT=${2:-"local"}  # Default to local if not specified
+# ENVIRONMENT is now set from the --profile argument or positional parameter
 
 # Create namespace if it doesn't exist
 kubectl create namespace $USER_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
@@ -116,29 +135,76 @@ fi
 
 write_success "Environment setup completed successfully!"
 
+# Generate environment-specific endpoints
+if [ "$ENVIRONMENT" == "azure" ]; then
+  # For Azure environment, we'll use the external IP/hostname
+  write_step "Getting AKS ingress information..."
+  
+  # Try to get the ingress IP or hostname
+  INGRESS_IP=$(kubectl -n $USER_NAMESPACE get svc store-ui-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+  INGRESS_HOSTNAME=$(kubectl -n $USER_NAMESPACE get svc store-ui-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+  
+  # Use IP if available, otherwise hostname, or default to placeholder
+  if [ -n "$INGRESS_IP" ]; then
+    BASE_URL="http://$INGRESS_IP"
+    write_success "Found AKS LoadBalancer IP: $INGRESS_IP"
+  elif [ -n "$INGRESS_HOSTNAME" ]; then
+    BASE_URL="http://$INGRESS_HOSTNAME"
+    write_success "Found AKS LoadBalancer hostname: $INGRESS_HOSTNAME"
+  else
+    BASE_URL="http://<AKS-EXTERNAL-IP>"
+    write_warning "Could not determine AKS external IP. Using placeholder. Check 'kubectl get svc -n $USER_NAMESPACE' for actual values."
+  fi
+  
+  # Define Azure environment URLs
+  STORE_URL="$BASE_URL"
+  USERS_URL="$BASE_URL/users/docs"
+  PRODUCTS_URL="$BASE_URL/products/api-docs/"
+  CART_URL="$BASE_URL/cart/swagger-ui.html"
+  SEARCH_URL="$BASE_URL/search/api/docs"
+  
+  ACCESS_NOTE="Use 'kubectl get svc -n $USER_NAMESPACE' to see service external IPs/hostnames if placeholders are shown."
+else
+  # For local environment, use localhost with specific ports
+  STORE_URL="http://localhost:8084"
+  USERS_URL="http://localhost:9090/docs"
+  PRODUCTS_URL="http://localhost:8081/api-docs/"
+  CART_URL="http://localhost:8080/swagger-ui.html"
+  SEARCH_URL="http://localhost:8082/api/docs"
+  
+  ACCESS_NOTE="These services will be available after you deploy the applications to the cluster or start them individually using their respective devspace_start.sh scripts."
+fi
+
+# Display header with environment
 echo -e "\n\033[1;45m                                                               \033[0m"
-echo -e "\033[1;45m  🌐 E-Commerce Application Services                            \033[0m"
+echo -e "\033[1;45m  🌐 E-Commerce Application Services ($ENVIRONMENT environment)  \033[0m"
 echo -e "\033[1;45m                                                               \033[0m\n"
 
 echo -e "\033[1;36m🛍️  Storefront UI:\033[0m"
-echo -e "   \033[1;92mhttp://localhost:8084/\033[0m"
+echo -e "   \033[1;92m$STORE_URL\033[0m"
 echo -e "   \033[0;90m└─ The main user interface for the e-commerce platform\033[0m"
 
 echo -e "\n\033[1;36m👤 Users Service API:\033[0m"
-echo -e "   \033[1;92mhttp://localhost:9090/docs\033[0m"
+echo -e "   \033[1;92m$USERS_URL\033[0m"
 echo -e "   \033[0;90m└─ User management, authentication and profiles\033[0m"
 
 echo -e "\n\033[1;36m📦 Products Service API:\033[0m"
-echo -e "   \033[1;92mhttp://localhost:8081/api-docs/\033[0m"
+echo -e "   \033[1;92m$PRODUCTS_URL\033[0m"
 echo -e "   \033[0;90m└─ Product catalog, inventory and pricing\033[0m"
 
 echo -e "\n\033[1;36m🛒 Cart Service API:\033[0m"
-echo -e "   \033[1;92mhttp://localhost:8080/swagger-ui.html\033[0m"
+echo -e "   \033[1;92m$CART_URL\033[0m"
 echo -e "   \033[0;90m└─ Shopping cart management and checkout process\033[0m"
 
 echo -e "\n\033[1;36m🔍 Search Service API:\033[0m"
-echo -e "   \033[1;92mhttp://localhost:8082/api/docs\033[0m"
+echo -e "   \033[1;92m$SEARCH_URL\033[0m"
 echo -e "   \033[0;90m└─ Product search and filtering functionality\033[0m"
 
-echo -e "\n\033[1;33m📝 Note:\033[0m These services will be available after you deploy the applications to the cluster"
-echo -e "\033[1;33m      or start them individually using their respective devspace_start.sh scripts.\033[0m"
+echo -e "\n\033[1;33m📝 Note:\033[0m $ACCESS_NOTE"
+
+# Add environment-specific notes
+if [ "$ENVIRONMENT" == "azure" ]; then
+  echo -e "\n\033[1;34m🔹 Azure Deployment:\033[0m Services are exposed through an Ingress controller"
+  echo -e "   Run the following command to check service status:"
+  echo -e "   \033[0;37mkubectl get pods,svc -n $USER_NAMESPACE\033[0m"
+fi

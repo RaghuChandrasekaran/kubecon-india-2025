@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: StatefulSet  # Changed from Deployment to StatefulSet
+metadata:
+  name: mongo
+  # Removed -deployment suffix for consistency with StatefulSet naming conventions
+spec:
+  serviceName: mongo-service  # Required for StatefulSet
+  # The rest remains similar but with important additions
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      volumes:
+      # Volumes section can be removed as we'll use volumeClaimTemplates
+      containers:
+      - name: mongo
+        image: mongo:latest
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: mongo-root-username
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb-secret
+                key: mongo-root-password
+  # This is the key addition for StatefulSet
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: local-storage
+      resources:
+        requests:
+          storage: 1Gi

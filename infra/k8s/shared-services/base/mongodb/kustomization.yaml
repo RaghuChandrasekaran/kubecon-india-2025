@@ -3,5 +3,7 @@ kind: Kustomization
 namespace: shared-services
 resources:
   - service.yaml
-  - deployment.yaml
+  - statefulset.yaml
   - secret.yaml
+  - mongo-pv.yaml
+  - mongo-pvc.yaml

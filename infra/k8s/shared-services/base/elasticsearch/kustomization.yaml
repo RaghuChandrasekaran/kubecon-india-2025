@@ -6,3 +6,5 @@ resources:
 - service.yaml
 - kibana-deployment.yaml
 - kibana-service.yaml
+- es-pv.yaml
+- es-pvc.yaml

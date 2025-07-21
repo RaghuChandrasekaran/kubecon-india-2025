@@ -1,12 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: NAMESPACE_PLACEHOLDER
+namespace: shared-services
 
 resources:
 - ../../../base/mongodb
 
-patches:
-- path: mongo-patch.yaml
 
 images:
 - name: mongo:5.0.9

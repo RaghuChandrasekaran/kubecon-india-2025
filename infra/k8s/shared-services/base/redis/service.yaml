@@ -3,9 +3,10 @@ kind: Service
 metadata:
   name: redis-service
 spec:
+  clusterIP: None  # Headless service for StatefulSet
   ports:
   - protocol: TCP
     port: 6379
     targetPort: 6379
   selector:
-    app: redis-deployment
+    app: redis  # Updated selector to match StatefulSet labels

@@ -5,4 +5,5 @@ namespace: shared-services
 
 resources:
   - service.yaml
-  - deployment.yaml
+  - statefulset.yaml
+  - secret.yaml
