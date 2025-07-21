@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: NAMESPACE_PLACEHOLDER
+
+resources:
+- ../../../base/mongodb
+
+patches:
+- path: mongo-patch.yaml
+
+images:
+- name: mongo:5.0.9
+  newName: mcr.microsoft.com/cosmosdb/mongodb
+  newTag: latest
