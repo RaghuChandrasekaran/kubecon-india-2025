@@ -4,3 +4,13 @@ namespace: NAMESPACE_PLACEHOLDER
 resources:
   - service.yaml
   - deployment.yaml
+
+configMapGenerator:
+- behavior: create
+  literals:
+  # Use Kubernetes service URLs for in-cluster communication
+  - REACT_APP_PRODUCTS_URL_BASE=http://localhost:8081/
+  - REACT_APP_CART_URL_BASE=http://localhost:8080/
+  name: store-ui-configmap
+generatorOptions:
+  disableNameSuffixHash: true

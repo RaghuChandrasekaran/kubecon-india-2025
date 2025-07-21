@@ -10,12 +10,5 @@ images:
   newName: image.registry.local:5001/search
   newTag: latest
 
-configMapGenerator:
-- behavior: create
-  literals:
-  - ELASTIC_URL=http://elastic-service.shared-services.svc.cluster.local:9200/
-  name: search-configmap
-generatorOptions:
-  disableNameSuffixHash: true
 patches:
 - path: deployment-patch.yaml

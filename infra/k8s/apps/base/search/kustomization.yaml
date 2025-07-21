@@ -4,3 +4,11 @@ namespace: NAMESPACE_PLACEHOLDER
 resources:
   - service.yaml
   - deployment.yaml
+
+configMapGenerator:
+- behavior: create
+  literals:
+  - ELASTIC_URL=http://elastic-service.shared-services.svc.cluster.local:9200/
+  name: search-configmap
+generatorOptions:
+  disableNameSuffixHash: true

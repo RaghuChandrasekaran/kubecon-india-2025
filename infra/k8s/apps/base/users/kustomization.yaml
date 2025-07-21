@@ -4,3 +4,12 @@ namespace: NAMESPACE_PLACEHOLDER
 resources:
   - service.yaml
   - deployment.yaml
+
+configMapGenerator:
+- behavior: create
+  literals:
+  - MONGO_URI=mongodb://mongo-root-username:mongo-root-password@mongo-service.shared-services.svc.cluster.local:27017/
+  - DATABASE=NAMESPACE_PLACEHOLDER
+  name: users-configmap
+generatorOptions:
+  disableNameSuffixHash: true

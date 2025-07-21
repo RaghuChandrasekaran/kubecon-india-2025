@@ -10,14 +10,5 @@ images:
   newName: image.registry.local:5001/cart
   newTag: latest
 
-configMapGenerator:
-- behavior: create
-  literals:
-  - SPRING_REDIS_HOST=redis-service.shared-services.svc.cluster.local
-  - SPRING_REDIS_PORT=6379
-  - SPRING_REDIS_PASSWORD=
-  name: cart-configmap
-generatorOptions:
-  disableNameSuffixHash: true
 patches:
 - path: deployment-patch.yaml

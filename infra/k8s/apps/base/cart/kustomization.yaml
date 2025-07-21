@@ -4,3 +4,13 @@ namespace: NAMESPACE_PLACEHOLDER
 resources:
   - service.yaml
   - deployment.yaml
+
+configMapGenerator:
+- behavior: create
+  literals:
+  - SPRING_REDIS_HOST=redis-service.shared-services.svc.cluster.local
+  - SPRING_REDIS_PORT=6379
+  - SPRING_REDIS_PASSWORD=
+  name: cart-configmap
+generatorOptions:
+  disableNameSuffixHash: true
