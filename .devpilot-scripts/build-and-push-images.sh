@@ -26,9 +26,34 @@ function write_error() {
 
 # Parse command line arguments
 ENVIRONMENT="local"
-if [ $# -ge 1 ]; then
-  ENVIRONMENT=$1
-fi
+PARAMS=()
+
+while (( "$#" )); do
+  case "$1" in
+    --profile|-p)
+      if [ -n "$2" ] && [ "${2:0:1}" != "-" ]; then
+        ENVIRONMENT="$2"
+        shift 2
+      else
+        echo -e "❌ Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    *) 
+      # Check if this might be a profile name without the --profile flag
+      if [[ "$1" == "local" || "$1" == "azure" || "$1" == "aws" || "$1" == "dev" ]]; then
+        ENVIRONMENT="$1"
+        shift
+      else
+        PARAMS+=("$1")
+        shift
+      fi
+      ;;
+  esac
+done
+
+# Restore positional parameters
+set -- "${PARAMS[@]}"
 
 # Set registry URL based on environment
 case "$ENVIRONMENT" in
