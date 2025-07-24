@@ -17,4 +17,3 @@ RUN addgroup -S spring && adduser -S spring -G spring
 WORKDIR /app
 COPY --from=build /app/build/libs/cart-1.0.0.jar app.jar
 USER spring:spring
-ENTRYPOINT ["java","-jar","/app/app.jar"]

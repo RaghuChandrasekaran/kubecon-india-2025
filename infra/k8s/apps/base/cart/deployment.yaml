@@ -20,6 +20,8 @@ spec:
       - name: cart
         image: cart:latest
         imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args: ["-c", "java -Dlogging.level.root=INFO -jar /app/app.jar"]
         ports:
         - name: http
           containerPort: 7000
