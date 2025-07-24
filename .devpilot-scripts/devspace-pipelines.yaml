@@ -5,18 +5,15 @@ localRegistry:
   enabled: false
 
 vars:
-  REGISTRY:
-    default: "image.registry.local:5001"
+  REGISTRY: "image.registry.local:5001"
   AZURE_REGISTRY:
     default: "kubecondemo.azurecr.io"
-  IMAGE_TAG:
-    default: "latest"
+  IMAGE_TAG: "latest"
   # Use sanitized username as default namespace
   NAMESPACE:
     command: "echo $USER | tr '.' '-'"
   # Base directory for Kubernetes manifests
-  K8S_DIR:
-    default: ".."
+  K8S_DIR: ".."
 
 # Generic images template - will be inherited by services
 images:
