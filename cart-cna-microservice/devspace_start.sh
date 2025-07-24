@@ -11,9 +11,8 @@ echo -e "${COLOR_CYAN}
 🚀 Cart Service Development Container Ready!
 
 Commands:
-- gradle bootRun  (start the service)
-- gradle build    (build the project)
-- gradle test     (run tests)
+- ./setup.sh --run  (start the service)
+- ./setup.sh --test (run tests)
 
 Access: http://localhost:8090/swagger-ui.html
 ${COLOR_RESET}"

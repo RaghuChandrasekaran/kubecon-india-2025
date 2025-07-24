@@ -67,7 +67,7 @@ public class CartController {
         @ApiResponse(responseCode = "404", description = "Cart not found", 
                 content = @Content)
     })
-    public Mono<Cart> findById(@Parameter(description = "ID of the customer to retrieve cart for") @PathVariable String customerId) {
+    public Mono<Cart> findById(@Parameter(description = "ID of the customer to retrieve cart for me") @PathVariable String customerId) {
         return cartOps.get(customerId);
     }
 
@@ -80,6 +80,7 @@ public class CartController {
                 content = @Content)
     })
     Mono<Void> create(@RequestBody Mono<Cart> cart) {
+        LOG.info("Cart Action triggered");
         return cart.doOnNext(c -> {
             LOG.info("Adding cart to Redis: {}", c);
             float total = 0;

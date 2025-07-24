@@ -36,6 +36,7 @@ dev:
       - gitCredentials: true
     ports:
       - port: "7000:7000"
+      - port: "6000:6000"
     open:
       - url: http://localhost:7000/swagger-ui.html
     env:
