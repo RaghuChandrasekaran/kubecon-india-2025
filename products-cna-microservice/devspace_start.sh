@@ -17,8 +17,8 @@ echo -e "${COLOR_BLUE}
 🚀 Products Service Development Container Ready!
 
 Commands:
-- npm start     (start the service)
-- npm test      (run tests)
+- npm run debug     (start the service with remote debugging and hot reloading)
+- npm test          (run tests)
 
 Access: http://localhost:8081/api-docs
 ${COLOR_RESET}"

@@ -5,12 +5,28 @@ imports:
   - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
 vars:
-  SERVICE_NAME:
-    default: "products"
-  K8S_MANIFEST_PATH_LOCAL:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/products/"
-  K8S_MANIFEST_PATH_AZURE:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/products/"
+  SERVICE_NAME: "products"
+  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/products/"
+  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/products/"
+
+
+pipelines:
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
+    run: |-
+      start_dev products
+  # You can run this pipeline via `devspace deploy` (or `devspace run-pipeline deploy`)
+  deploy:
+    run: |-
+      run_dependencies --all                            # 1. Deploy any projects this project needs (see "dependencies")
+      ensure_pull_secrets --all                         # 2. Ensure pull secrets
+      build_images --all -t $(git describe --always)    # 3. Build, tag (git commit hash) and push all images (see "images")
+      create_deployments products                        # 4. Deploy manifests
+  # Custom pipeline to run the debug server. You can run this pipeline via `devspace run-pipeline debug-server`
+  debug-server:
+    run: |-
+      echo "Running products debug server."
+      start_dev products-debug
 
 dev:
   products:
@@ -41,6 +57,18 @@ dev:
       - command: helm
       - gitCredentials: true
     ports:
-      - port: "5000"
+      - port: "5000:5000"
+      - port: "9229:9229"
     open:
       - url: http://localhost:5000/api-docs
+  # Remote Debug configuration for the products service
+  products-debug:
+    labelSelector:
+      app: products-deployment
+    container: products
+    command:
+      - npm
+      - run
+      - debug
+    ports:
+      - port: "9229:9229"

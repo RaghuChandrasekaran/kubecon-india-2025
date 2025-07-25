@@ -20,6 +20,8 @@ spec:
       - name: products
         image: products:latest
         imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args: ["-c", "npm start"]
         env:
         - name: MONGO_URI  ## Define the name of the variable
           valueFrom:
