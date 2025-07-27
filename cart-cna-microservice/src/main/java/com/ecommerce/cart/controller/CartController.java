@@ -1,7 +1,9 @@
 package com.ecommerce.cart.controller;
 
+import com.ecommerce.cart.service.CartService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -33,14 +35,8 @@ public class CartController {
 
     private static final Logger LOG = LoggerFactory.getLogger(CartController.class);
 
-    private ReactiveRedisTemplate<String, Cart> redisTemplate;
-
-    private ReactiveValueOperations<String, Cart> cartOps;
-
-    CartController(ReactiveRedisTemplate<String, Cart> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.cartOps = this.redisTemplate.opsForValue();
-    }
+    @Autowired
+    private CartService cartService;
 
     @RequestMapping("/")
     @Operation(summary = "Get API info", description = "Returns basic information about the Cart API")
@@ -54,10 +50,10 @@ public class CartController {
         @ApiResponse(responseCode = "200", description = "List of all carts", 
                 content = @Content(schema = @Schema(implementation = Cart.class)))
     })
-    public Flux<Cart> list() {
-        return redisTemplate.keys("*")
-                .flatMap(cartOps::get);
+    public Flux<Cart> listCartData() {
+        return cartService.listCartData();
     }
+
 
     @GetMapping("/cart/{customerId}")
     @Operation(summary = "Get cart by customer ID", description = "Retrieves a specific shopping cart by customer ID")
@@ -67,8 +63,8 @@ public class CartController {
         @ApiResponse(responseCode = "404", description = "Cart not found", 
                 content = @Content)
     })
-    public Mono<Cart> findById(@Parameter(description = "ID of the customer to retrieve cart for me") @PathVariable String customerId) {
-        return cartOps.get(customerId);
+    public Mono<Cart> getCartById(@Parameter(description = "ID of the customer to retrieve cart for me") @PathVariable String customerId) {
+        return cartService.getCartById(customerId);
     }
 
     @PostMapping("/cart")
@@ -79,20 +75,7 @@ public class CartController {
         @ApiResponse(responseCode = "400", description = "Invalid cart data supplied", 
                 content = @Content)
     })
-    Mono<Void> create(@RequestBody Mono<Cart> cart) {
-        LOG.info("Cart Action triggered");
-        return cart.doOnNext(c -> {
-            LOG.info("Adding cart to Redis: {}", c);
-            float total = 0;
-            if (c.getCustomerId() == null) {
-                LOG.error("Customer Id is missing.");
-                return;
-            }
-            for (CartItem item : c.getItems()) {
-                total += item.getPrice() * item.getQuantity();
-            }
-            c.setTotal(total);
-            cartOps.set(c.getCustomerId(), c).subscribe();
-        }).then();
+    Mono<Void> addOrModifyCartItem(@RequestBody Mono<Cart> cart) {
+        return cartService.addOrModifyCartItem(cart);
     }
 }
