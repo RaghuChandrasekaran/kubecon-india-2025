@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { getCart, updateQuantity, removeFromCart } from "../../api/cart"
+import { getCart, updateQuantity, removeFromCart, getShippingCost, formatCurrency } from "../../api/cart"
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -32,6 +32,7 @@ const Cart = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+    const [cartSummary, setCartSummary] = useState<any>(null);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -69,6 +70,18 @@ const Cart = () => {
             return total + (item.price * item.quantity);
         }, 0) || 0;
     };
+
+    // Load cart data and set summary
+    useEffect(() => {
+        if (cart?.items?.length) {
+            setCartSummary({
+                cart: cart,
+                shippingMethod: 'default'
+            });
+        } else {
+            setCartSummary(null);
+        }
+    }, [cart]);
 
     // Sample recommended products (would come from API in real implementation)
     const recommendedProducts = [
@@ -268,7 +281,7 @@ const Cart = () => {
                                                         color: theme.palette.primary.main
                                                     }}
                                                 >
-                                                    ${(item.price * item.quantity).toFixed(2)}
+                                                    {formatCurrency(item.price * item.quantity)}
                                                 </Typography>
                                                 <IconButton 
                                                     color="error"
@@ -310,7 +323,7 @@ const Cart = () => {
                                         Subtotal
                                     </Typography>
                                     <Typography variant="body1">
-                                        ${calculateTotal().toFixed(2)}
+                                        {cartSummary ? formatCurrency(cartSummary.cart.subtotal || 0) : formatCurrency(calculateTotal())}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -318,7 +331,7 @@ const Cart = () => {
                                         Shipping
                                     </Typography>
                                     <Typography variant="body1">
-                                        $0.00
+                                        {cartSummary ? formatCurrency(getShippingCost(cartSummary.shippingMethod)) : formatCurrency(0)}
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -326,7 +339,7 @@ const Cart = () => {
                                         Tax
                                     </Typography>
                                     <Typography variant="body1">
-                                        $0.00
+                                        {cartSummary ? formatCurrency(cartSummary.cart.taxAmount || 0) : formatCurrency(0)}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -338,7 +351,7 @@ const Cart = () => {
                                     Total
                                 </Typography>
                                 <Typography variant="h6" color="primary" fontWeight={600}>
-                                    ${calculateTotal().toFixed(2)}
+                                    {cartSummary ? formatCurrency(cartSummary.cart.total || 0) : formatCurrency(calculateTotal())}
                                 </Typography>
                             </Box>
                             
@@ -445,7 +458,7 @@ const Cart = () => {
                                                         mt: 1 
                                                     }}
                                                 >
-                                                    ${product.price.toFixed(2)}
+                                                    {formatCurrency(product.price)}
                                                 </Typography>
                                             </Box>
                                         </Card>

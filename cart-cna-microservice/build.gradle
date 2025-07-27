@@ -37,7 +37,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
 	// Hot reload during dev
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	implementation 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.fusesource.jansi:jansi:2.4.0'
 
 	// OpenAPI documentation
@@ -65,7 +65,9 @@ tasks.named('test') {
 bootRun {
 	jvmArgs = [
 			"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:6000",
-			"-Dspring.output.ansi.enabled=ALWAYS"
+			"-Dspring.output.ansi.enabled=ALWAYS",
+			"-Dspring.devtools.restart.enabled=true"
 	]
 	sourceResources sourceSets.main
+	classpath = sourceSets.main.runtimeClasspath
 }

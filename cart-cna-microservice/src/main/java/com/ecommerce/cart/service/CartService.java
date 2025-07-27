@@ -2,6 +2,8 @@ package com.ecommerce.cart.service;
 
 import com.ecommerce.cart.model.Cart;
 import com.ecommerce.cart.model.CartItem;
+import com.ecommerce.cart.model.GSTCategory;
+import com.ecommerce.cart.model.ProductCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,9 @@ public class CartService {
     private ReactiveRedisTemplate<String, Cart> redisTemplate;
 
     private ReactiveValueOperations<String, Cart> cartOps;
+    
+    @Autowired
+    private TaxCalculationService taxCalculationService;
 
     CartService(ReactiveRedisTemplate<String, Cart> redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -45,14 +50,30 @@ public class CartService {
                 return Mono.error(new IllegalArgumentException("Customer Id is missing."));
             }
 
-            float total = 0;
-            for (CartItem item : c.getItems()) {
-                total += item.getPrice() * item.getQuantity();
-            }
-            c.setTotal(total);
+            setProductMetaData(c);
+            TaxCalculationService.TaxBreakdown taxBreakdown = taxCalculationService.calculateTaxForCart(c);
+            c.setSubtotal(taxBreakdown.getSubtotal());
+            c.setTaxAmount(taxBreakdown.getTaxAmount());
+            c.setTotal(taxBreakdown.getTotal());
+
+            LOG.info("Cart calculation completed: {}", taxBreakdown);
 
             return cartOps.set(c.getCustomerId(), c).then(); // Propagate this operation
         });
+    }
+
+    private void setProductMetaData(Cart c) {
+        for (CartItem item : c.getItems()) {
+            if (item.getCategory() == null) {
+                item.setCategory(ProductCategory.GENERAL);
+            }
+            if (item.getGstCategory() == null) {
+                item.setGstCategory(GSTCategory.determineGSTCategory(item.getCategory()));
+            }
+            if (item.getCurrency() == null || item.getCurrency().isEmpty()) {
+                item.setCurrency("INR");
+            }
+        }
     }
 
     public Mono<Boolean> deleteCartItemById(String customerId) {

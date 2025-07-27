@@ -91,3 +91,46 @@ export const clearCart = async () => {
         throw error;
     }
 }
+
+// Update cart with shipping method
+export const updateCartWithShipping = async (shippingMethod: string) => {
+    try {
+        const customerId = getCurrentCustomerId();
+        
+        // Get current cart
+        const cart = await getCart();
+        if (!cart) throw new Error('Cart not found');
+        
+        // Update cart with shipping method
+        const updatedCart = {
+            ...cart,
+            shippingMethod
+        };
+        
+        // Save updated cart and return it
+        const response = await axiosClient.post(`${cartUrl}cart`, updatedCart);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating cart with shipping:", error);
+        throw error;
+    }
+}
+
+// Helper function to get shipping cost by method
+export const getShippingCost = (shippingMethod: string = 'default') => {
+    const shippingCosts = {
+        default: 0,
+        standard: 99,
+        express: 199,
+        overnight: 399
+    };
+    return shippingCosts[shippingMethod as keyof typeof shippingCosts] || 0;
+};
+
+// Helper function to format currency in INR
+export const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR'
+    }).format(amount);
+};

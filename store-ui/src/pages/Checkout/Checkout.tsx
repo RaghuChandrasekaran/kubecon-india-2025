@@ -30,7 +30,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import HomeIcon from '@mui/icons-material/Home';
 import AddIcon from '@mui/icons-material/Add';
 import { useCart } from '../../components/layout/CartContext';
-import { getCart } from '../../api/cart';
+import { getCart, updateCartWithShipping, clearCart, getShippingCost, formatCurrency } from '../../api/cart';
 import { isAuthenticated, getUserAddresses, saveUserAddress, Address } from '../../api/users';
 import SEO from '../../components/SEO';
 
@@ -49,7 +49,7 @@ const initialFormState = {
     city: '',
     state: '',
     postalCode: '',
-    country: 'USA',
+    country: 'IND',
     email: '',
     phone: '',
     isDefault: false
@@ -62,7 +62,7 @@ const initialFormState = {
     billingAddressSame: true
   },
   options: {
-    shippingMethod: 'standard',
+    shippingMethod: 'default',
     giftWrap: false,
     saveInfo: true
   }
@@ -88,21 +88,24 @@ const Checkout = () => {
     });
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+    const [cartSummary, setCartSummary] = useState<any>(null);
     const { cart: cartContext, refreshCart } = useCart();
-
-    // Shipping cost calculation based on method
-    const shippingCosts = {
-      standard: 5.99,
-      express: 12.99,
-      overnight: 24.99
-    };
 
     // Get cart data on component mount
     useEffect(() => {
         setLoading(true);
         getCart()
-            .then(cartData => {
-                setCart(cartData);
+            .then((cartData) => {
+                if (cartData && cartData.items?.length > 0) {
+                    setCart(cartData);
+                    // Set initial cart summary with default shipping
+                    setCartSummary({
+                        cart: cartData,
+                        shippingMethod: 'default'
+                    });
+                } else {
+                    navigate('/cart');
+                }
                 setLoading(false);
             })
             .catch(() => {
@@ -120,7 +123,7 @@ const Checkout = () => {
                     if (fetchedAddresses.length > 0) {
                         setSelectedAddress(fetchedAddresses[0]);
                         // Also populate shipping form with first address details
-                        setFormData(prev => ({
+                        setFormData((prev: any) => ({
                             ...prev,
                             shipping: {
                                 ...prev.shipping,
@@ -135,24 +138,59 @@ const Checkout = () => {
         }
     }, []);
 
-    // Calculate order total including shipping
+    // Calculate order values (backend handles shipping addition in total)
     const calculateSubtotal = () => {
-        return cart?.items?.reduce((total: number, item: any) => {
-            return total + (item.price * item.quantity);
-        }, 0) || 0;
+        console.log('Cart Summary:', cartSummary); // Debug log
+        return cartSummary?.cart?.subtotal || 0;
     };
 
     const calculateShipping = () => {
-        return shippingCosts[formData.options.shippingMethod as keyof typeof shippingCosts] || 5.99;
+        // This is just for display - backend handles actual shipping in total
+        const shippingMethod = formData.options.shippingMethod || cartSummary?.shippingMethod || 'default';
+        return getShippingCost(shippingMethod);
     };
 
     const calculateTax = () => {
-        // Simple tax calculation (could be more complex based on location)
-        return calculateSubtotal() * 0.08; // 8% tax rate
+        return cartSummary?.cart?.taxAmount || 0;
     };
 
     const calculateTotal = () => {
-        return calculateSubtotal() + calculateShipping() + calculateTax();
+        // Use backend calculated total (includes shipping)
+        return cartSummary?.cart?.total || 0;
+    };
+
+    // Handle shipping method change and update cart summary
+    const handleShippingMethodChange = async (newShippingMethod: string) => {
+        try {
+            setLoading(true);
+            
+            // Update cart with shipping method in backend
+            await updateCartWithShipping(newShippingMethod);
+            
+            // Get fresh cart data to get updated totals from backend
+            const freshCartData = await getCart();
+            if (freshCartData && freshCartData.items?.length > 0) {
+                setCart(freshCartData);
+                setCartSummary({
+                    cart: freshCartData,
+                    shippingMethod: newShippingMethod
+                });
+            }
+            
+            // Update form data with new shipping method
+            setFormData((prev: any) => ({
+                ...prev,
+                options: {
+                    ...prev.options,
+                    shippingMethod: newShippingMethod
+                }
+            }));
+            
+        } catch (error) {
+            console.error('Error updating shipping method:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Form validation functions
@@ -177,7 +215,7 @@ const Checkout = () => {
         
         if (!formData.shipping.postalCode.trim()) {
             newErrors.postalCode = 'Postal code is required';
-        } else if (!/^\d{5}(-\d{4})?$/.test(formData.shipping.postalCode)) {
+        } else if (!/^\d{5,6}(-\d{4})?$/.test(formData.shipping.postalCode)) {
             newErrors.postalCode = 'Invalid postal code format';
         }
         
@@ -187,9 +225,9 @@ const Checkout = () => {
             newErrors.email = 'Invalid email format';
         }
 
-        setErrors(prev => ({ ...prev, shipping: newErrors }));
+        setErrors((prev: any) => ({ ...prev, shipping: newErrors }));
         const isValid = Object.keys(newErrors).length === 0;
-        setSectionComplete(prev => ({ ...prev, shipping: isValid }));
+        setSectionComplete((prev: any) => ({ ...prev, shipping: isValid }));
         
         return isValid;
     };
@@ -219,9 +257,9 @@ const Checkout = () => {
             newErrors.cvv = 'CVV must be 3 or 4 digits';
         }
         
-        setErrors(prev => ({ ...prev, payment: newErrors }));
+        setErrors((prev: any) => ({ ...prev, payment: newErrors }));
         const isValid = Object.keys(newErrors).length === 0;
-        setSectionComplete(prev => ({ ...prev, payment: isValid }));
+        setSectionComplete((prev: any) => ({ ...prev, payment: isValid }));
         
         return isValid;
     };
@@ -229,7 +267,7 @@ const Checkout = () => {
     // Handle form input changes
     const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev: any) => ({
             ...prev,
             shipping: {
                 ...prev.shipping,
@@ -240,7 +278,7 @@ const Checkout = () => {
 
     const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev: any) => ({
             ...prev,
             payment: {
                 ...prev.payment,
@@ -251,7 +289,7 @@ const Checkout = () => {
 
     const handleOptionsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, checked, type } = e.target;
-        setFormData(prev => ({
+        setFormData((prev: any) => ({
             ...prev,
             options: {
                 ...prev.options,
@@ -297,10 +335,12 @@ const Checkout = () => {
         
         setSubmitting(true);
         
-        // Simulate API call to place order
         try {
-            // In a real app, you would call your API here
+            // In a real app, you would call your order placement API here
             await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Clear the cart using API after successful order placement
+            await clearCart();
             
             // Success - navigate to confirmation page
             refreshCart(); // Update cart count to reflect empty cart
@@ -315,7 +355,7 @@ const Checkout = () => {
     // Handle address selection
     const handleAddressSelect = (address: Address) => {
         setSelectedAddress(address);
-        setFormData(prev => ({
+        setFormData((prev: any) => ({
             ...prev,
             shipping: {
                 ...prev.shipping,
@@ -334,9 +374,9 @@ const Checkout = () => {
         // Simulate API call to save address
         saveUserAddress(formData.shipping)
             .then(savedAddress => {
-                setAddresses(prev => [...prev, savedAddress]);
+                setAddresses((prev: any) => [...prev, savedAddress]);
                 setSelectedAddress(savedAddress);
-                setFormData(prev => ({
+                setFormData((prev: any) => ({
                     ...prev,
                     shipping: {
                         ...prev.shipping,
@@ -544,6 +584,7 @@ const Checkout = () => {
                                         onChange={handleShippingChange}
                                         autoComplete="country"
                                     >
+                                        <MenuItem value="IND">India</MenuItem>
                                         <MenuItem value="USA">United States</MenuItem>
                                         <MenuItem value="CAN">Canada</MenuItem>
                                         <MenuItem value="MEX">Mexico</MenuItem>
@@ -579,7 +620,7 @@ const Checkout = () => {
                                     ) : (
                                         <Box sx={{ mb: 2 }}>
                                             <Grid container spacing={2}>
-                                                {addresses.map((address, index) => (
+                                                {addresses.map((address: any, index: number) => (
                                                     <Grid item xs={12} sm={6} key={address.id || index}>
                                                         <Paper 
                                                             elevation={1}
@@ -652,7 +693,7 @@ const Checkout = () => {
                                                         startIcon={<AddIcon />} 
                                                         onClick={() => {
                                                             // Clear form to add a new address
-                                                            setFormData(prev => ({
+                                                            setFormData((prev: any) => ({
                                                                 ...prev,
                                                                 shipping: {
                                                                     ...initialFormState.shipping,
@@ -785,6 +826,7 @@ const Checkout = () => {
                                                         onChange={handleShippingChange}
                                                         autoComplete="country"
                                                     >
+                                                        <MenuItem value="IND">India</MenuItem>
                                                         <MenuItem value="USA">United States</MenuItem>
                                                         <MenuItem value="CAN">Canada</MenuItem>
                                                         <MenuItem value="MEX">Mexico</MenuItem>
@@ -808,7 +850,7 @@ const Checkout = () => {
                                                                 <Checkbox
                                                                     name="makeDefault"
                                                                     checked={!!formData.shipping.isDefault}
-                                                                    onChange={(e) => setFormData(prev => ({
+                                                                    onChange={(e: any) => setFormData((prev: any) => ({
                                                                         ...prev,
                                                                         shipping: {
                                                                             ...prev.shipping,
@@ -836,6 +878,121 @@ const Checkout = () => {
                                             </Grid>
                                         </Box>
                                     )}
+                                </Grid>
+                                
+                                {/* Shipping Method Selection */}
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 2 }} />
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 'medium', mb: 2 }}>
+                                        Shipping Method
+                                    </Typography>
+                                    
+                                    <FormControl component="fieldset" fullWidth>
+                                        <RadioGroup
+                                            value={formData.options.shippingMethod}
+                                            onChange={(e: any) => handleShippingMethodChange(e.target.value)}
+                                        >
+                                            <Paper 
+                                                elevation={1} 
+                                                sx={{ 
+                                                    p: 2, 
+                                                    mb: 1, 
+                                                    border: formData.options.shippingMethod === 'default' ? '2px solid' : '1px solid',
+                                                    borderColor: formData.options.shippingMethod === 'default' ? 'primary.main' : 'divider'
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value="default"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                            <Box>
+                                                                <Typography variant="body1" fontWeight="medium">Default Shipping</Typography>
+                                                                <Typography variant="body2" color="text.secondary">7-10 business days</Typography>
+                                                            </Box>
+                                                            <Typography variant="h6" color="primary">FREE</Typography>
+                                                        </Box>
+                                                    }
+                                                    sx={{ margin: 0, width: '100%' }}
+                                                />
+                                            </Paper>
+                                            
+                                            <Paper 
+                                                elevation={1} 
+                                                sx={{ 
+                                                    p: 2, 
+                                                    mb: 1, 
+                                                    border: formData.options.shippingMethod === 'standard' ? '2px solid' : '1px solid',
+                                                    borderColor: formData.options.shippingMethod === 'standard' ? 'primary.main' : 'divider'
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value="standard"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                            <Box>
+                                                                <Typography variant="body1" fontWeight="medium">Standard Shipping</Typography>
+                                                                <Typography variant="body2" color="text.secondary">5-7 business days</Typography>
+                                                            </Box>
+                                                            <Typography variant="h6" color="primary">₹99</Typography>
+                                                        </Box>
+                                                    }
+                                                    sx={{ margin: 0, width: '100%' }}
+                                                />
+                                            </Paper>
+                                            
+                                            <Paper 
+                                                elevation={1} 
+                                                sx={{ 
+                                                    p: 2, 
+                                                    mb: 1, 
+                                                    border: formData.options.shippingMethod === 'express' ? '2px solid' : '1px solid',
+                                                    borderColor: formData.options.shippingMethod === 'express' ? 'primary.main' : 'divider'
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value="express"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                            <Box>
+                                                                <Typography variant="body1" fontWeight="medium">Express Shipping</Typography>
+                                                                <Typography variant="body2" color="text.secondary">2-3 business days</Typography>
+                                                            </Box>
+                                                            <Typography variant="h6" color="primary">₹199</Typography>
+                                                        </Box>
+                                                    }
+                                                    sx={{ margin: 0, width: '100%' }}
+                                                />
+                                            </Paper>
+                                            
+                                            <Paper 
+                                                elevation={1} 
+                                                sx={{ 
+                                                    p: 2, 
+                                                    mb: 1, 
+                                                    border: formData.options.shippingMethod === 'overnight' ? '2px solid' : '1px solid',
+                                                    borderColor: formData.options.shippingMethod === 'overnight' ? 'primary.main' : 'divider'
+                                                }}
+                                            >
+                                                <FormControlLabel
+                                                    value="overnight"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                            <Box>
+                                                                <Typography variant="body1" fontWeight="medium">Overnight Shipping</Typography>
+                                                                <Typography variant="body2" color="text.secondary">Next business day</Typography>
+                                                            </Box>
+                                                            <Typography variant="h6" color="primary">₹399</Typography>
+                                                        </Box>
+                                                    }
+                                                    sx={{ margin: 0, width: '100%' }}
+                                                />
+                                            </Paper>
+                                        </RadioGroup>
+                                    </FormControl>
                                 </Grid>
                                 
                                 <Grid item xs={12}>
@@ -962,7 +1119,7 @@ const Checkout = () => {
                                             <Checkbox
                                                 name="billingAddressSame"
                                                 checked={formData.payment.billingAddressSame}
-                                                onChange={(e) => setFormData(prev => ({
+                                                onChange={(e: any) => setFormData((prev: any) => ({
                                                     ...prev,
                                                     payment: {
                                                         ...prev.payment,
@@ -1094,7 +1251,7 @@ const Checkout = () => {
                                                 </Typography>
                                             </Box>
                                             <Typography variant="body1">
-                                                ${(item.price * item.quantity).toFixed(2)}
+                                                {formatCurrency(item.price * item.quantity)}
                                             </Typography>
                                         </Box>
                                     ))}
@@ -1110,7 +1267,7 @@ const Checkout = () => {
                                                     color="primary"
                                                 />
                                             }
-                                            label="Add gift wrapping (+$4.99)"
+                                            label="Add gift wrapping (+₹49)"
                                         />
                                         
                                         <FormControlLabel
@@ -1170,7 +1327,7 @@ const Checkout = () => {
                                 Subtotal ({cart?.items?.reduce((total: number, item: any) => total + item.quantity, 0)} items)
                             </Typography>
                             <Typography variant="body1">
-                                ${calculateSubtotal().toFixed(2)}
+                                {formatCurrency(calculateSubtotal())}
                             </Typography>
                         </Box>
                         
@@ -1183,7 +1340,7 @@ const Checkout = () => {
                                 Shipping
                             </Typography>
                             <Typography variant="body1">
-                                ${calculateShipping().toFixed(2)}
+                                {formatCurrency(calculateShipping())}
                             </Typography>
                         </Box>
                         
@@ -1196,7 +1353,7 @@ const Checkout = () => {
                                 Tax
                             </Typography>
                             <Typography variant="body1">
-                                ${calculateTax().toFixed(2)}
+                                {formatCurrency(calculateTax())}
                             </Typography>
                         </Box>
                         
@@ -1210,7 +1367,7 @@ const Checkout = () => {
                                     Gift Wrapping
                                 </Typography>
                                 <Typography variant="body1">
-                                    $4.99
+                                    {formatCurrency(49)} {/* Gift wrap cost in INR */}
                                 </Typography>
                             </Box>
                         )}
@@ -1226,7 +1383,7 @@ const Checkout = () => {
                                 Total
                             </Typography>
                             <Typography variant="h6" color="primary.main">
-                                ${(calculateTotal() + (formData.options.giftWrap ? 4.99 : 0)).toFixed(2)}
+                                {formatCurrency(calculateTotal() + (formData.options.giftWrap ? 49 : 0))}
                             </Typography>
                         </Box>
                         

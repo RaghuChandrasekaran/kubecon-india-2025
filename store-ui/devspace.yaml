@@ -5,12 +5,9 @@ imports:
   - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
 vars:
-  SERVICE_NAME:
-    default: "store-ui"
-  K8S_MANIFEST_PATH_LOCAL:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/store-ui/"
-  K8S_MANIFEST_PATH_AZURE:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/store-ui/"
+  SERVICE_NAME: "store-ui"
+  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/store-ui/"
+  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/store-ui/"
 
 dev:
   store-ui:

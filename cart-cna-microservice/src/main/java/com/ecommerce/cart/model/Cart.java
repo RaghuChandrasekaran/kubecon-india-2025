@@ -21,9 +21,15 @@ public class Cart {
     @Schema(description = "List of items in the cart")
     private List<CartItem> items;
     
-    @Schema(description = "Total price of all items in the cart", example = "145.0")
+    @Schema(description = "Subtotal price of all items before tax", example = "145.0")
+    private float subtotal;
+    
+    @Schema(description = "Total tax amount (GST)", example = "26.1")
+    private float taxAmount;
+    
+    @Schema(description = "Total price including tax", example = "171.1")
     private float total;
     
-    @Schema(description = "Currency for the cart", example = "USD")
+    @Schema(description = "Currency for the cart", example = "INR")
     private String currency;
 }

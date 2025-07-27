@@ -68,10 +68,10 @@ public class CartRedisOperationsTest {
     }
 
     private Cart getSampleCart() {
-        CartItem cartItem = new CartItem("cart-1-1", "sku1", "Nike Shoes", 1, 145.0f, "USD");
+        CartItem cartItem = new CartItem("cart-1-1", "sku1", "Nike Shoes", null, 1, 145.0f, "USD", null);
         ArrayList<CartItem> cartItems = new ArrayList<CartItem>();
         cartItems.add(cartItem);
-        return new Cart("cart-1", cartItems, 145.0f, "USD");
+        return new Cart("cart-1", cartItems, 145.0f, 0.0f, 145.0f, "USD");
     }
 
 }

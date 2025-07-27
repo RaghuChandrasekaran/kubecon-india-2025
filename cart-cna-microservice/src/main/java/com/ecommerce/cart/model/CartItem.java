@@ -19,12 +19,18 @@ public class CartItem  {
     @Schema(description = "Product title", example = "Nike Shoes")
     private String title;
     
+    @Schema(description = "Product category", example = "SHOES")
+    private ProductCategory category;
+    
     @Schema(description = "Quantity of the product", example = "1")
     private int quantity;
     
     @Schema(description = "Price per unit", example = "145.0")
     private float price;
     
-    @Schema(description = "Currency for the price", example = "USD")
+    @Schema(description = "Currency for the price", example = "INR")
     private String currency;
+    
+    @Schema(description = "GST category for tax calculation")
+    private GSTCategory gstCategory;
 }
