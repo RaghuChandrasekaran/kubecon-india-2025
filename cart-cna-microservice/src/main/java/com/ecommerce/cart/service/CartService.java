@@ -36,19 +36,23 @@ public class CartService {
 
     public Mono<Void> addOrModifyCartItem(Mono<Cart> cart) {
         LOG.info("Cart Action triggered");
-        return cart.doOnNext(c -> {
+
+        return cart.flatMap(c -> {
             LOG.info("Adding cart to Redis: {}", c);
-            float total = 0;
+
             if (c.getCustomerId() == null) {
                 LOG.error("Customer Id is missing.");
-                return;
+                return Mono.error(new IllegalArgumentException("Customer Id is missing."));
             }
+
+            float total = 0;
             for (CartItem item : c.getItems()) {
                 total += item.getPrice() * item.getQuantity();
             }
             c.setTotal(total);
-            cartOps.set(c.getCustomerId(), c).subscribe();
-        }).then();
+
+            return cartOps.set(c.getCustomerId(), c).then(); // Propagate this operation
+        });
     }
 
     public Mono<Boolean> deleteCartItemById(String customerId) {
