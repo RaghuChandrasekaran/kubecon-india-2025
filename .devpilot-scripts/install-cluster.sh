@@ -108,6 +108,21 @@ function write_phase_summary() {
   echo ""
 }
 
+NC='\033[0m'           # No Color
+BYELLOW='\033[1;33m'   # Bright yellow
+BCYAN='\033[1;36m'     # Bright cyan
+BWHITE='\033[1;37m'    # Bright white
+function highlight_boxed_cmd() {
+    local text="$1"
+    local color="${2:-$BYELLOW}"
+    local width=$(( ${#text} + 4 ))
+    
+    echo -e "${color}┌$( printf '─%.0s' $(seq 1 $width) )┐${NC}"
+    echo -e "${color}│  ${BWHITE}$text${color}  │${NC}"
+    echo -e "${color}└$( printf '─%.0s' $(seq 1 $width) )┘${NC}"
+}
+
+
 #region Pre-flight Checks
 write_phase "Pre-flight Checks"
 
@@ -167,12 +182,14 @@ if [[ -z "$registry_exists" ]]; then
   
   # Create Docker volume for registry data persistence
   write_progress "Creating Docker volume for registry data..."
+  highlight_boxed_cmd "docker volume create registry-data"
   docker volume create registry-data || true
   
   # Pull and run the Docker registry
   write_progress "Starting registry container..."
   
   # Using registry:2 image with CORS enabled
+  highlight_boxed_cmd "docker run -d --name $registry_name -p $registry_port:5000 registry:2"
   docker run -d \
     --name $registry_name \
     -p $registry_port:5000 \
@@ -186,6 +203,7 @@ if [[ -z "$registry_exists" ]]; then
   
   # Set up the registry UI
   write_progress "Starting registry UI container..."
+  highlight_boxed_cmd "docker run -d --name registry-ui -p $registry_ui_port:80 joxit/docker-registry-ui:latest"
   docker run -d \
     --name registry-ui \
     -p $registry_ui_port:80 \
@@ -202,6 +220,7 @@ else
   health=$(docker inspect --format='{{.State.Status}}' "$registry_name")
   if [[ "$health" != "running" ]]; then
     write_progress "Starting existing registry container..."
+    highlight_boxed_cmd "docker start $registry_name"
     docker start "$registry_name"
   fi
   
@@ -209,6 +228,7 @@ else
   ui_exists=$(docker ps -a --format '{{.Names}}' | grep -E "^registry-ui$" || true)
   if [[ -z "$ui_exists" ]]; then
     write_progress "Starting registry UI container..."
+    highlight_boxed_cmd "docker run -d --name registry-ui -p $registry_ui_port:80 joxit/docker-registry-ui:latest"
     docker run -d \
       --name registry-ui \
       -p $registry_ui_port:80 \
@@ -222,6 +242,7 @@ else
     ui_health=$(docker inspect --format='{{.State.Status}}' "registry-ui" 2>/dev/null || echo "not_found")
     if [[ "$ui_health" != "running" ]]; then
       write_progress "Starting existing UI container..."
+      highlight_boxed_cmd "docker start registry-ui"
       docker start "registry-ui"
     fi
   fi
@@ -268,6 +289,7 @@ else
   
   # Clean up any leftover containers
   write_progress "Cleaning up any leftover containers..."
+  highlight_boxed_cmd "docker rm -f ${cluster_name}-control-plane ${cluster_name}-worker"
   docker rm -f "${cluster_name}-control-plane" "${cluster_name}-worker" 2>/dev/null || true
   
   # Give time for cleanup
@@ -276,6 +298,7 @@ else
   write_step "Creating Kubernetes cluster..."
   
   # Create cluster with better error handling
+  highlight_boxed_cmd "kind create cluster --name $cluster_name --config $kind_config_path"
   if ! kind create cluster --name "$cluster_name" --config "$kind_config_path"; then
     write_error "Failed to create cluster $cluster_name"
     exit 1
@@ -345,6 +368,7 @@ reg_host_dir="/etc/containerd/certs.d/image.registry.local:$registry_port"
 echo "$kind_nodes" | while read -r node; do
   if [[ -n "$node" ]]; then
     write_progress "Configuring node: $node"
+    highlight_boxed_cmd "docker exec $node mkdir -p $reg_host_dir"
     docker exec "$node" mkdir -p "$reg_host_dir"
     hosts_toml="[host.\"http://image.registry.local:$registry_port\"]"
     echo "$hosts_toml" | docker exec -i "$node" /bin/sh -c "cat > $reg_host_dir/hosts.toml"
@@ -354,8 +378,10 @@ done
 
 # Connect registry container to kind network
 write_progress "Connecting registry to cluster network..."
+highlight_boxed_cmd "docker network connect kind $registry_name"
 docker network connect "kind" "$registry_name" || true
 write_progress "Connecting UI container to cluster network..."
+highlight_boxed_cmd "docker network connect kind registry-ui"
 docker network connect "kind" "registry-ui" || true
 write_success "Networks connected"
 
@@ -466,3 +492,6 @@ echo -e "🔸 To start the cluster: \033[0;36mdocker start ${cluster_containers[
 echo -e "\n\033[0;32m💡 Registry data is persisted in Docker volumes. Your registry data will be\033[0m"
 echo -e "\033[0;32m   preserved even when you stop or delete your Kubernetes cluster.\033[0m"
 #endregion
+
+highlight_boxed_cmd "kind get clusters"
+kind get clusters

@@ -24,6 +24,20 @@ function write_error() {
   echo -e "❌ $1"
 }
 
+NC='\033[0m'           # No Color
+BYELLOW='\033[1;33m'   # Bright yellow
+BCYAN='\033[1;36m'     # Bright cyan
+BWHITE='\033[1;37m'    # Bright white
+function highlight_boxed_cmd() {
+    local text="$1"
+    local color="${2:-$BYELLOW}"
+    local width=$(( ${#text} + 4 ))
+    
+    echo -e "${color}┌$( printf '─%.0s' $(seq 1 $width) )┐${NC}"
+    echo -e "${color}│  ${BWHITE}$text${color}  │${NC}"
+    echo -e "${color}└$( printf '─%.0s' $(seq 1 $width) )┘${NC}"
+}
+
 # Parse command line arguments
 ENVIRONMENT="local"
 PARAMS=()
@@ -231,17 +245,20 @@ for service_info in "${services[@]}"; do
     continue
   fi
   
+  highlight_boxed_cmd "docker build -t $name:$tag ."
   if docker build -t "$name:$tag" .; then
     write_success "Built $name:$tag"
     
     # Tag the image for local registry
     write_step "Tagging image for local registry..."
     registry_image="$registry_url/$name:$tag"
+    highlight_boxed_cmd "docker tag $name:$tag $registry_image"
     docker tag "$name:$tag" "$registry_image"
     write_success "Tagged as $registry_image"
     
     # Push to local registry
     write_step "Pushing to local registry..."
+    highlight_boxed_cmd "docker push $registry_image"
     if docker push "$registry_image"; then
       write_success "Successfully pushed $registry_image"
     else

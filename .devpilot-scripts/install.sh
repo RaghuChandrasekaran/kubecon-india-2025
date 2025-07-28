@@ -17,6 +17,20 @@ function write_success() { echo -e "✅ $1"; }
 function write_warning() { echo -e "⚠️ $1"; }
 function write_error() { echo -e "❌ $1"; }
 
+NC='\033[0m'           # No Color
+BYELLOW='\033[1;33m'   # Bright yellow
+BCYAN='\033[1;36m'     # Bright cyan
+BWHITE='\033[1;37m'    # Bright white
+function highlight_boxed_cmd() {
+    local text="$1"
+    local color="${2:-$BYELLOW}"
+    local width=$(( ${#text} + 4 ))
+    
+    echo -e "${color}┌$( printf '─%.0s' $(seq 1 $width) )┐${NC}"
+    echo -e "${color}│  ${BWHITE}$text${color}  │${NC}"
+    echo -e "${color}└$( printf '─%.0s' $(seq 1 $width) )┘${NC}"
+}
+
 # Get base path from devpilot.json
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -155,6 +169,7 @@ quickstart(){
 
 
 # Create namespace if it doesn't exist
+highlight_boxed_cmd "kubectl create namespace $USER_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -"
 kubectl create namespace $USER_NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
 # Deploy infrastructure if requested
@@ -164,6 +179,7 @@ if [ "$MODE" == "infra" ] || [ "$MODE" == "both" ]; then
   
   if [ -d "$INFRA_PATH" ]; then
     write_step "Applying infrastructure from $INFRA_PATH"
+    highlight_boxed_cmd "kubectl apply -k $INFRA_PATH"
     kubectl apply -k "$INFRA_PATH" && write_success "Infrastructure deployed successfully" || write_error "Failed to deploy infrastructure"
   else
     write_warning "Infrastructure directory not found at: $INFRA_PATH"
@@ -196,6 +212,7 @@ if [ "$MODE" == "app" ] || [ "$MODE" == "both" ]; then
     
     # Apply with kustomize
     write_step "Applying application manifests with kustomize..."
+    highlight_boxed_cmd "kubectl apply -k $TEMP_DIR/apps/overlays/$ENVIRONMENT"
     kubectl apply -k "$TEMP_DIR/apps/overlays/$ENVIRONMENT" && write_success "Application deployed successfully with kustomize" || {
       write_warning "Kustomize failed, applying YAML files directly"
       find "$TEMP_DIR/apps/overlays/$ENVIRONMENT" -name "*.yaml" ! -name "kustomization.yaml" -exec kubectl apply -f {} \;

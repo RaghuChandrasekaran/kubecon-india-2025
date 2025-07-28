@@ -33,6 +33,21 @@ WHITE='\033[1;37m'      # Bright White (bold)
 GRAY='\033[1;90m'       # Bright Black (bold gray)
 BOLD='\033[1m'
 RESET='\033[0m'
+NC='\033[0m'           # No Color
+BYELLOW='\033[1;33m'   # Bright yellow
+BCYAN='\033[1;36m'     # Bright cyan
+BWHITE='\033[1;37m'    # Bright white
+
+# Function to highlight important commands in a golden rectangular box
+function highlight_boxed_cmd() {
+    local text="$1"
+    local color="${2:-$BYELLOW}"
+    local width=$(( ${#text} + 4 ))
+    
+    echo -e "${color}┌$( printf '─%.0s' $(seq 1 $width) )┐${NC}"
+    echo -e "${color}│  ${BWHITE}$text${color}  │${NC}"
+    echo -e "${color}└$( printf '─%.0s' $(seq 1 $width) )┘${NC}"
+}
 
 # Helper Functions with high-contrast formatting
 function write_phase() { echo -e "\n${BLUE}🚀 $1${RESET}"; }
@@ -166,7 +181,7 @@ if [ "$MODE" == "app" ] || [ "$MODE" == "both" ]; then
     
     # Single command to uninstall all application components
     write_trash "Uninstalling all application components with a single command..."
-    write_command "kubectl delete -k \"$TEMP_DIR/apps/overlays/$ENVIRONMENT\" --ignore-not-found"
+    highlight_boxed_cmd "kubectl delete -k $TEMP_DIR/apps/overlays/$ENVIRONMENT --ignore-not-found"
     
     # Execute the delete command and capture the output
     DELETE_OUTPUT=$(kubectl delete -k "$TEMP_DIR/apps/overlays/$ENVIRONMENT" --ignore-not-found 2>&1)
@@ -200,7 +215,7 @@ if [ "$MODE" == "infra" ] || [ "$MODE" == "both" ]; then
   
   if [ -d "$INFRA_PATH" ]; then
     write_step "Removing infrastructure from ${WHITE}$INFRA_PATH${RESET}"
-    write_command "kubectl delete -k \"$INFRA_PATH\" --ignore-not-found"
+    highlight_boxed_cmd "kubectl delete -k $INFRA_PATH --ignore-not-found"
     
     # Execute the delete command and capture the output
     DELETE_OUTPUT=$(kubectl delete -k "$INFRA_PATH" --ignore-not-found 2>&1)
