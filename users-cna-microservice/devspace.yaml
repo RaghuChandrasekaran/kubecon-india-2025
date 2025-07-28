@@ -48,11 +48,6 @@ dev:
       command: ./devspace_start.sh
     ssh:
       enabled: true
-    proxyCommands:
-      - command: devspace
-      - command: kubectl
-      - command: helm
-      - gitCredentials: true
     ports:
       - port: "9090"
     open:

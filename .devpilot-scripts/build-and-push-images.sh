@@ -131,21 +131,21 @@ fi
 write_phase "Build Configuration"
 write_progress "Environment: $ENVIRONMENT"
 write_progress "Build Type: $BUILD_TYPE"
+if [ ${#SPECIFIC_SERVICES[@]} -gt 0 ]; then
+  write_progress "Specific Services: ${SPECIFIC_SERVICES[*]}"
+fi
 
 # Set registry URL based on environment
 case "$ENVIRONMENT" in
   "azure")
-    # Use Azure Container Registry (replace with your ACR name)
     registry_url=${REGISTRY_URL:-"kubecondemo.azurecr.io"}
     write_progress "Using Azure Container Registry: $registry_url"
     ;;
   "aws")
-    # Use AWS ECR (replace with your ECR URI)
     registry_url=${REGISTRY_URL:-"123456789012.dkr.ecr.region.amazonaws.com"}
     write_progress "Using AWS Elastic Container Registry: $registry_url"
     ;;
   *)
-    # Default to local registry
     registry_url=${REGISTRY_URL:-"image.registry.local:5001"}
     write_progress "Using local registry: $registry_url"
     ;;
@@ -155,81 +155,14 @@ esac
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Load service locations from devpilot.json
-DEVPILOT_CONFIG="$PROJECT_DIR/.devpilot.json"
-if [ ! -f "$DEVPILOT_CONFIG" ]; then
-  write_error "DevPilot configuration file not found at $DEVPILOT_CONFIG"
-  write_error "Please run 'devpilot init' first to configure your project"
-  exit 1
-fi
-
-write_phase "Loading service configuration from DevPilot config"
-# Use jq if available, otherwise use grep and sed as fallback
-if command -v jq &> /dev/null; then
-  write_progress "Using jq to parse configuration"
-  # Try to extract services from the devpilot.json using jq
-  SERVICES_JSON=$(jq -c '.services[]' "$DEVPILOT_CONFIG" 2>/dev/null)
-  
-  if [ -z "$SERVICES_JSON" ]; then
-    write_warning "No services found in DevPilot config or jq command failed"
-    write_warning "Falling back to default service detection"
-    # Default fallback
-    declare -a services=(
-      "cart:$PROJECT_DIR/cart-cna-microservice"
-      "products:$PROJECT_DIR/products-cna-microservice"
-      "search:$PROJECT_DIR/search-cna-microservice"
-      "store-ui:$PROJECT_DIR/store-ui"
-      "users:$PROJECT_DIR/users-cna-microservice"
-    )
-  else
-    # Parse JSON into services array
-    declare -a services=()
-    while IFS= read -r service_obj; do
-      service_name=$(echo "$service_obj" | jq -r '.name')
-      service_location=$(echo "$service_obj" | jq -r '.location')
-      # Make relative paths absolute
-      if [[ "$service_location" != /* ]]; then
-        service_location="$PROJECT_DIR/$service_location"
-      fi
-      services+=("$service_name:$service_location")
-      write_progress "Detected service: $service_name at $service_location"
-    done <<< "$SERVICES_JSON"
-  fi
-else
-  write_warning "jq not found, using fallback method to parse configuration"
-  # Fallback method using grep and sed if jq is not available
-  services_section=$(grep -A 100 '"services":' "$DEVPILOT_CONFIG" | grep -B 100 -m 1 '^\s*\]' || grep -A 100 '"services":' "$DEVPILOT_CONFIG")
-  
-  declare -a services=()
-  while IFS= read -r line; do
-    if [[ "$line" =~ \"name\":\ *\"([^\"]+)\" ]]; then
-      service_name="${BASH_REMATCH[1]}"
-      # Try to get the location from the next few lines
-      location_line=$(grep -A 5 "\"name\": \"$service_name\"" "$DEVPILOT_CONFIG" | grep "\"location\"")
-      if [[ "$location_line" =~ \"location\":\ *\"([^\"]+)\" ]]; then
-        service_location="${BASH_REMATCH[1]}"
-        # Make relative paths absolute
-        if [[ "$service_location" != /* ]]; then
-          service_location="$PROJECT_DIR/$service_location"
-        fi
-        services+=("$service_name:$service_location")
-        write_progress "Detected service: $service_name at $service_location"
-      fi
-    fi
-  done <<< "$services_section"
-  
-  # If no services detected, use default fallback
-  if [ ${#services[@]} -eq 0 ]; then
-    write_warning "No services detected in DevPilot config, using default service detection"
-    declare -a services=(
-      "cart:$PROJECT_DIR/cart-cna-microservice"
-      "products:$PROJECT_DIR/products-cna-microservice"
-      "search:$PROJECT_DIR/search-cna-microservice"
-      "store-ui:$PROJECT_DIR/store-ui"
-      "users:$PROJECT_DIR/users-cna-microservice"
-    )
-  fi
-fi
+# Default services configuration
+declare -a services=(
+  "cart:$PROJECT_DIR/cart-cna-microservice"
+  "products:$PROJECT_DIR/products-cna-microservice"
+  "search:$PROJECT_DIR/search-cna-microservice"
+  "store-ui:$PROJECT_DIR/store-ui"
+  "users:$PROJECT_DIR/users-cna-microservice"
+)
 
 # Function to build and push a single image
 build_and_push_image() {
@@ -275,7 +208,6 @@ build_and_push_image() {
 # Check if registry is running - only for local environment
 if [ "$ENVIRONMENT" == "local" ]; then
   write_phase "Checking Local Registry"
-  # Check for either the old kind-registry or the new dev-harbor container
   registry_container=$(docker ps --filter "name=kind-registry" --format "{{.Names}}")
   harbor_container=$(docker ps --filter "name=dev-harbor" --format "{{.Names}}")
 
@@ -288,35 +220,6 @@ if [ "$ENVIRONMENT" == "local" ]; then
     write_success "Harbor registry is running at $registry_url"
   else
     write_success "Local registry is running at $registry_url"
-  fi
-else
-  write_phase "Using Cloud Registry: $registry_url"
-  
-  # For Azure, check if logged in to ACR
-  if [ "$ENVIRONMENT" == "azure" ]; then
-    write_step "Checking Azure Container Registry access..."
-    if ! az acr login --name $(echo "$registry_url" | cut -d '.' -f1) 2>/dev/null; then
-      write_warning "Not logged in to Azure Container Registry. Attempting to login..."
-      if ! az acr login --name $(echo "$registry_url" | cut -d '.' -f1); then
-        write_error "Failed to login to Azure Container Registry. Please run 'az login' and 'az acr login --name YOUR_ACR_NAME' first."
-        exit 1
-      fi
-    fi
-    write_success "Successfully authenticated with Azure Container Registry"
-  fi
-  
-  # For AWS, check if logged in to ECR
-  if [ "$ENVIRONMENT" == "aws" ]; then
-    write_step "Checking AWS ECR access..."
-    aws_region=$(echo "$registry_url" | cut -d '.' -f4)
-    if ! aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$registry_url" 2>/dev/null; then
-      write_warning "Not logged in to AWS ECR. Attempting to login..."
-      if ! aws ecr get-login-password --region "$aws_region" | docker login --username AWS --password-stdin "$registry_url"; then
-        write_error "Failed to login to AWS ECR. Please configure AWS credentials with 'aws configure' first."
-        exit 1
-      fi
-    fi
-    write_success "Successfully authenticated with AWS ECR"
   fi
 fi
 
@@ -424,34 +327,12 @@ case "$BUILD_TYPE" in
 esac
 
 echo -e "\nNext steps:"
-
-# Display environment-specific next steps
-case "$ENVIRONMENT" in
-  "azure")
-    echo "1. You can verify images in the registry using: az acr repository list --name $(echo "$registry_url" | cut -d '.' -f1)"
-    echo "2. You can see image tags using: az acr repository show-tags --name $(echo "$registry_url" | cut -d '.' -f1) --repository <image-name>"
-    echo "3. To deploy to AKS, update your Kubernetes manifests to use the Azure Container Registry images"
-    if [[ "$BUILD_TYPE" == "both" || "$BUILD_TYPE" == "dev" ]]; then
-      echo "4. Run 'devspace dev' for lightning-fast development environment startup"
-    fi
-    ;;
-  "aws")
-    echo "1. You can verify images in the registry using: aws ecr describe-repositories"
-    echo "2. You can see image tags using: aws ecr describe-images --repository-name <image-name>"
-    echo "3. To deploy to EKS, update your Kubernetes manifests to use the ECR images"
-    if [[ "$BUILD_TYPE" == "both" || "$BUILD_TYPE" == "dev" ]]; then
-      echo "4. Run 'devspace dev' for lightning-fast development environment startup"
-    fi
-    ;;
-  *)
-    echo "1. You can verify images in the registry using: docker images"
-    echo "2. To see pushed images: curl http://$registry_url/v2/_catalog"
-    echo "3. To deploy cluster: run your deployment scripts"
-    if [[ "$BUILD_TYPE" == "both" || "$BUILD_TYPE" == "dev" ]]; then
-      echo "4. Run 'devspace dev' for lightning-fast development environment startup"
-    fi
-    ;;
-esac
+echo "1. You can verify images in the registry using: docker images"
+echo "2. To see pushed images: curl http://$registry_url/v2/_catalog"
+echo "3. To deploy cluster: run your deployment scripts"
+if [[ "$BUILD_TYPE" == "both" || "$BUILD_TYPE" == "dev" ]]; then
+  echo "4. Run 'devspace dev' for lightning-fast development environment startup"
+fi
 
 if [ $successful_builds -eq $total_builds ] && [ $total_builds -gt 0 ]; then
   write_success "All builds completed successfully! 🎉"

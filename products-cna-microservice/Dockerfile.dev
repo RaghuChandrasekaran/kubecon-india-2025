@@ -11,33 +11,33 @@ RUN apk add --no-cache \
     vim \
     nano
 
-# Set working directory
-WORKDIR /app
+# Create a non-root user for development EARLY
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeuser -u 1001 -G nodejs
 
-# Copy package files
-COPY package*.json ./
+# Set working directory and give ownership to nodeuser
+WORKDIR /app
+RUN chown nodeuser:nodejs /app
+
+# Switch to non-root user for all subsequent operations
+USER nodeuser
+
+# Copy package files with proper ownership
+COPY --chown=nodeuser:nodejs package*.json ./
 
 # Install dependencies (including dev dependencies)
 RUN npm install
 
-# Install global development tools
+# Install global development tools (switch back to root temporarily)
+USER root
 RUN npm install -g nodemon
+USER nodeuser
 
-# Copy source code
-COPY . .
+# Copy source code with proper ownership
+COPY --chown=nodeuser:nodejs . .
 
 # Pre-validate the application during build (saves time on startup)
 RUN npm run test --if-present || true
 
 # Make devspace_start.sh executable
 RUN chmod +x devspace_start.sh
-
-# Create a non-root user for development
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodeuser -u 1001 -G nodejs
-
-# Change ownership of the app directory
-RUN chown -R nodeuser:nodejs /app
-
-# Switch to non-root user
-USER nodeuser

@@ -51,11 +51,6 @@ dev:
       command: ./devspace_start.sh
     ssh:
       enabled: true
-    proxyCommands:
-      - command: devspace
-      - command: kubectl
-      - command: helm
-      - gitCredentials: true
     ports:
       - port: "5000:5000"
       - port: "9229:9229"

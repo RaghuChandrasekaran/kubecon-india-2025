@@ -5,12 +5,20 @@ imports:
   - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
 vars:
-  SERVICE_NAME:
-    default: "search"
-  K8S_MANIFEST_PATH_LOCAL:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/search/"
-  K8S_MANIFEST_PATH_AZURE:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/search/"
+  SERVICE_NAME: "search"
+  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/search/"
+  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/search/"
+
+pipelines:
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
+    run: |-
+      start_dev search
+  # Custom pipeline to run the debug server. You can run this pipeline via `devspace run-pipeline debug-server`
+  debug-server:
+    run: |-
+      echo "Running products debug server."
+      start_dev search-debug
 
 dev:
   search:
@@ -30,7 +38,10 @@ dev:
     terminal:
       command: ./devspace_start.sh
     ports:
-      - port: "4000"
+      - port: "4000:4000"
+      - port: "9230:9230"
+    open:
+      - url: http://localhost:4000/api/docs
     env:
       - name: NODE_ENV
         value: "development"
@@ -42,8 +53,9 @@ dev:
       app: search-deployment
     container: search
     command:
-      - node
-      - --inspect=0.0.0.0:9230
-      - server.js
+      - npm
+      - run
+      - debug
     ports:
+      - port: "4000:4000"
       - port: "9230:9230"

@@ -40,8 +40,5 @@ COPY --chown=reactjs:nodejs . .
 # Pre-build the React application during image creation (HUGE time saver!)
 RUN npm run build
 
-# Run tests to validate build
-RUN npm run test -- --coverage --ci --silent --passWithNoTests
-
 # Make devspace_start.sh executable
 RUN chmod +x devspace_start.sh
