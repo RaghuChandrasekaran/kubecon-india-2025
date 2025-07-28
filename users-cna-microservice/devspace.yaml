@@ -5,12 +5,27 @@ imports:
   - path: "../.devpilot-scripts/devspace-pipelines.yaml"
 
 vars:
-  SERVICE_NAME:
-    default: "users"
-  K8S_MANIFEST_PATH_LOCAL:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/local/users/"
-  K8S_MANIFEST_PATH_AZURE:
-    default: "${K8S_DIR}/infra/k8s/apps/overlays/azure/users/"
+  SERVICE_NAME: "users"
+  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/users/"
+  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/users/"
+
+pipelines:
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
+    run: |-
+      start_dev users
+  # You can run this pipeline via `devspace deploy` (or `devspace run-pipeline deploy`)
+  deploy:
+    run: |-
+      run_dependencies --all                            # 1. Deploy any projects this project needs (see "dependencies")
+      ensure_pull_secrets --all                         # 2. Ensure pull secrets
+      build_images --all -t $(git describe --always)    # 3. Build, tag (git commit hash) and push all images (see "images")
+      create_deployments users                           # 4. Deploy manifests
+  # Custom pipeline to run the debug server. You can run this pipeline via `devspace run-pipeline debug-server`
+  debug-server:
+    run: |-
+      echo "Running users debug server."
+      start_dev users-debug
 
 dev:
   users:
@@ -47,3 +62,30 @@ dev:
         value: "/app"
       - name: ENVIRONMENT
         value: "development"
+# Remote Debug configuration for the users service
+  users-debug:
+    labelSelector:
+      app: users-deployment
+    container: users
+    command:
+      - python
+      - -m
+      - debugpy
+      - --listen
+      - 0.0.0.0:5678
+      - app.py
+    ports:
+      - port: "5678:5678"
+
+### Helper commands
+commands:
+  # Development commands
+  develop:
+    command: devspace use namespace ${NAMESPACE} && devspace run dev
+    description: "Start the users service in development mode with hot reload and debugging support."
+  debug:
+    command: devspace use namespace ${NAMESPACE} && devspace run-pipeline debug-server
+    description: "Attach to the debug server for remote debugging. Does not modify the application, but allows you to debug it remotely."
+  stop:
+    command: devspace use namespace ${NAMESPACE} && devspace purge
+    description: "Stop the users service and clean up resources."

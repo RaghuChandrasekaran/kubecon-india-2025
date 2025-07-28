@@ -2,7 +2,7 @@ version: v2beta1
 name: common-scripts
 
 localRegistry:
-  enabled: false
+  enabled: true
 
 vars:
   REGISTRY: "image.registry.local:5001"
@@ -20,6 +20,8 @@ images:
   app:
     image: ${REGISTRY}/${SERVICE_NAME}
     dockerfile: ./Dockerfile
+    buildKit:
+      inCluster: {}
     tags:
     - ${IMAGE_TAG}
 

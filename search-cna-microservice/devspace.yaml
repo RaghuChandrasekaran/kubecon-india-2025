@@ -36,3 +36,14 @@ dev:
         value: "development"
       - name: ELASTIC_URL
         value: "http://localhost:9200/"
+  # Remote Debug configuration for the search service
+  search-debug:
+    labelSelector:
+      app: search-deployment
+    container: search
+    command:
+      - node
+      - --inspect=0.0.0.0:9230
+      - server.js
+    ports:
+      - port: "9230:9230"
