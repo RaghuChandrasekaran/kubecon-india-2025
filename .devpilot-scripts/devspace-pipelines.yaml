@@ -208,6 +208,10 @@ pipelines:
       log_step "Replacing namespace placeholders with: ${NAMESPACE}"
       find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/${NAMESPACE}/g" {} \;
       
+      # Replace image tags from latest to dev
+      log_step "Replacing image tags from 'latest' to 'dev'"
+      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/:latest/:dev/g" {} \;
+      
       # Create or verify namespace
       log_step "Setting up namespace: ${NAMESPACE}"
       if kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -; then

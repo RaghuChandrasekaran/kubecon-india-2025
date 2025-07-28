@@ -40,5 +40,8 @@ RUN addgroup -g 1001 -S spring && \
 # Change ownership of the app directory
 RUN chown -R springuser:spring /app
 
+# Copy the built JAR to a consistent location for the debug command
+RUN cp /app/build/libs/cart-1.0.0.jar /app/app.jar
+
 # Switch to non-root user
 USER springuser
