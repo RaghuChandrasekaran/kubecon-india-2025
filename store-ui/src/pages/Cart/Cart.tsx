@@ -75,9 +75,13 @@ const Cart = () => {
     const handleShippingMethodChange = async (method: string) => {
         try {
             setShippingMethod(method);
-            // Use the more efficient shipping update method
+            // Backend handles all calculations - just update and refresh
             const updatedCart = await updateShippingMethod(method);
             setCartWithShipping(updatedCart);
+            
+            // Force a cart refresh to ensure we have latest backend calculations
+            await refreshCart();
+            
             showMessage('Shipping method updated', 'success');
         } catch (error) {
             console.error('Error updating shipping method:', error);
@@ -92,7 +96,7 @@ const Cart = () => {
         });
     }, [refreshCart]);
 
-    // Update cart with shipping when cart changes - debounced to prevent multiple calls
+    // Update cart with shipping when cart changes - let backend handle all calculations
     useEffect(() => {
         if (cart?.items && cart.items.length > 0) {
             // Clear existing timeout
@@ -105,20 +109,8 @@ const Cart = () => {
                     .then(setCartWithShipping)
                     .catch((error) => {
                         console.error('Error updating cart with shipping:', error);
-                        // Fallback to original cart with calculated shipping
-                        const shipping = getShippingCost(shippingMethod);
-                        if (cart) {
-                            setCartWithShipping({
-                                ...cart,
-                                shippingMethod,
-                                shippingCost: shipping,
-                                // Use backend total (subtotal + tax) + shipping
-                                total: cart.total || 0,
-                                // Preserve backend calculations
-                                subtotal: cart.subtotal || 0,
-                                taxAmount: cart.taxAmount || 0
-                            });
-                        }
+                        // On error, just use the original cart - backend should handle calculations
+                        setCartWithShipping(cart);
                     });
             }, 500); // Debounce for 500ms
 

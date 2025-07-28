@@ -14,12 +14,11 @@ interface CartSummaryProps {
 const CartSummary = ({ cart, shippingMethod = 'default', onCheckout, onContinueShopping, onShippingMethodChange }: CartSummaryProps) => {
     const navigate = useNavigate();
 
-    // Calculate totals from cart
+    // Get all values from backend - no frontend calculations
     const subtotal = cart?.subtotal || 0;
     const tax = cart?.tax || cart?.taxAmount || 0;
-    const shipping = cart?.shipping || cart?.shippingCost || getShippingCost(shippingMethod);
-    // Use backend calculated total if available and shipping is included, otherwise calculate manually
-    const total = cart?.total || (subtotal + tax + shipping);
+    const shipping = cart?.shipping || cart?.shippingCost || 0;
+    const total = cart?.total || 0;
 
     const shippingMethods = [
         { id: 'default', name: 'Free Shipping', time: '5-7 business days', cost: 0 },
