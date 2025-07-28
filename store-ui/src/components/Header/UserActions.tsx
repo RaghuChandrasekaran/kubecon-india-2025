@@ -21,20 +21,20 @@ const EnhancedCartBadge = styled('div')(({ theme }) => ({
   justifyContent: 'center',
   minWidth: '44px',
   minHeight: '44px',
-  borderRadius: '50%',
-  transition: 'background-color 0.2s',
+  borderRadius: '8px',
+  transition: 'all 0.2s ease',
   '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   '@keyframes pulse': {
     '0%': {
-      boxShadow: '0 0 0 0 rgba(255, 255, 255, 0.2)',
+      boxShadow: '0 0 0 0 rgba(255, 152, 0, 0.4)',
     },
     '70%': {
-      boxShadow: '0 0 0 8px rgba(255, 255, 255, 0)',
+      boxShadow: '0 0 0 10px rgba(255, 152, 0, 0)',
     },
     '100%': {
-      boxShadow: '0 0 0 0 rgba(255, 255, 255, 0)',
+      boxShadow: '0 0 0 0 rgba(255, 152, 0, 0)',
     },
   },
 }));
@@ -58,6 +58,15 @@ const UserActions: React.FC<UserActionsProps> = ({ cartCount, colorMode }) => {
         color="inherit"
         onClick={colorMode.toggleColorMode}
         aria-label={theme.palette.mode === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+        sx={{
+          borderRadius: '8px',
+          padding: '8px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            transform: 'scale(1.05)'
+          }
+        }}
       >
         {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
       </IconButton>
@@ -74,6 +83,12 @@ const UserActions: React.FC<UserActionsProps> = ({ cartCount, colorMode }) => {
             animation: cartCount > 0 ? 'pulse 2s infinite' : 'none',
             minWidth: '44px',
             minHeight: '44px',
+            borderRadius: '8px',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              transform: 'scale(1.05)'
+            }
           }}
         >
           <Badge 
@@ -82,17 +97,17 @@ const UserActions: React.FC<UserActionsProps> = ({ cartCount, colorMode }) => {
             showZero
             sx={{
               '& .MuiBadge-badge': {
-                minWidth: '22px',
-                height: '22px',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                borderRadius: '11px',
-                transform: 'scale(1.2) translate(30%, -30%)',
-                padding: '0 6px',
-                border: theme.palette.mode === 'dark' ? '2px solid #1a237e' : '2px solid #1976d2',
-                backgroundColor: '#f44336',
+                minWidth: '20px',
+                height: '20px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                borderRadius: '10px',
+                transform: 'scale(1) translate(50%, -50%)',
+                padding: '0 4px',
+                border: '2px solid #1a1a1a',
+                backgroundColor: '#FF4444',
                 color: 'white',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                boxShadow: '0 2px 8px rgba(255, 68, 68, 0.3)',
               }
             }}
             anchorOrigin={{
@@ -115,7 +130,19 @@ const UserActions: React.FC<UserActionsProps> = ({ cartCount, colorMode }) => {
         startIcon={<PersonIcon />}
         sx={{ 
           display: { xs: 'none', sm: 'flex' },
-          minHeight: '44px',
+          minHeight: '40px',
+          borderRadius: '8px',
+          padding: '8px 16px',
+          textTransform: 'none',
+          fontWeight: 500,
+          fontSize: '0.9rem',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            borderColor: 'rgba(255, 255, 255, 0.3)',
+            transform: 'translateY(-1px)'
+          }
         }}
         aria-label="Login or view account"
       >

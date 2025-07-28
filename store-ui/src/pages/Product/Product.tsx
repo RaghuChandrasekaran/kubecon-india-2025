@@ -41,6 +41,7 @@ import DiscountIcon from '@mui/icons-material/Discount';
 import { useNavigate } from "react-router-dom";
 import ImageOptimizer from '../../components/ImageOptimizer';
 import SEO from '../../components/SEO';
+import { createCartItem } from '../../utils/currency';
 
 const Product = () => {
     const { id } = useParams()
@@ -75,14 +76,22 @@ const Product = () => {
 
     const handleAddToCart = () => {
         setAddingToCart(true);
-        const item = {
+        const item = createCartItem({
+            productId: product?._id || '',
+            sku: product?.variants[0]?.sku || '',
+            title: product?.title || '',
+            price: product?.price || 0,
+            thumbnail: product?.thumbnails?.[0] || '',
+            quantity: textQuantity
+        });
+        
+        console.log('Adding to cart from Product page:', {
             productId: product?._id,
             sku: product?.variants[0]?.sku,
             title: product?.title,
-            quantity: textQuantity,
-            price: product?.price,
-            currency: product?.currency
-        }
+            source: 'product-page'
+        });
+        
         addToCart(item).then((result) => {
             setAddingToCart(false);
             setAddedToCart(true);

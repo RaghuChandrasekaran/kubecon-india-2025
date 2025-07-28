@@ -11,7 +11,11 @@ const Logo: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         cursor: 'pointer',
-        marginRight: 2
+        marginRight: 3,
+        transition: 'transform 0.2s ease',
+        '&:hover': {
+          transform: 'scale(1.02)'
+        }
       }}
       onClick={() => navigate('/')}
       tabIndex={0}
@@ -23,18 +27,20 @@ const Logo: React.FC = () => {
         src="/logo.png"
         alt="Clusterly"
         style={{
-          height: '40px',
+          height: '36px',
           width: 'auto',
-          marginRight: '12px'
+          marginRight: '10px'
         }}
       />
       <Typography
-        variant="h6"
+        variant="h5"
         component="div"
         sx={{ 
-          fontWeight: 'bold',
-          letterSpacing: '0.5px',
-          color: '#fff'
+          fontWeight: 700,
+          letterSpacing: '-0.5px',
+          color: '#fff',
+          fontSize: '1.5rem',
+          fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif'
         }}
       >
         Clusterly

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { getCart, updateQuantity, removeFromCart } from '../../api/cart';
+import { getCart, updateQuantity, removeFromCart, addToCart as addToCartAPI } from '../../api/cart';
 
 interface CartItem {
     productId: string;
@@ -85,8 +85,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             });
 
-            // Make API call
-            await updateQuantity(item.sku, item.quantity);
+            // Make API call to add item to cart
+            await addToCartAPI(item);
             
             // Refresh cart to get server state
             await refreshCart();

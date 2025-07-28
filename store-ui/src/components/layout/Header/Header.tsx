@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../CartContext';
 import { useTheme } from '@mui/material/styles';
 import ThemeContext from '../ThemeContext';
-import { Container, useMediaQuery } from '@mui/material';
+import { useMediaQuery } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import { styled } from '@mui/material/styles';
 
@@ -159,21 +159,40 @@ const Header = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1 }}>
+        <>
             {/* Skip to content link for accessibility */}
             <SkipLink href="#main-content">
                 Skip to main content
             </SkipLink>
             <MuiAppBar 
-                position="static" 
-                elevation={4}
+                position="sticky" 
+                elevation={2}
                 sx={{
-                    backgroundColor: '#232F3E', // Amazon's dark navy color
-                    color: '#fff'
+                    backgroundColor: '#1a1a1a !important', // Darker, more modern color with !important
+                    color: '#fff',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                    zIndex: 1100,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    transition: 'box-shadow 0.3s ease',
+                    width: '100%',
+                    position: 'sticky'
                 }}
             >
-                <Container maxWidth="xl">
-                    <Toolbar>
+                <Box sx={{ 
+                    width: '100%',
+                    px: { xs: 1, sm: 2, md: 3 }
+                }}>
+                    <Toolbar sx={{ 
+                        minHeight: '64px',
+                        padding: 0,
+                        gap: 1,
+                        width: '100%',
+                        maxWidth: 'none'
+                    }}>
                         {isMobile && (
                             <IconButton
                                 ref={menuButtonRef}
@@ -184,7 +203,16 @@ const Header = () => {
                                 aria-controls="mobile-navigation-drawer"
                                 aria-expanded={mobileMenuOpen}
                                 onClick={toggleMobileMenu}
-                                sx={{ mr: 1 }}
+                                sx={{ 
+                                    mr: 1,
+                                    borderRadius: '8px',
+                                    padding: '8px',
+                                    transition: 'all 0.2s ease',
+                                    '&:hover': {
+                                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                        transform: 'scale(1.05)'
+                                    }
+                                }}
                             >
                                 <MenuIcon />
                             </IconButton>
@@ -208,7 +236,7 @@ const Header = () => {
                             colorMode={colorMode}
                         />
                     </Toolbar>
-                </Container>
+                </Box>
 
                 {!isMobile && (
                     <NavigationTabs
@@ -234,7 +262,7 @@ const Header = () => {
             <main id="main-content" tabIndex={-1}>
                 {/* Main content will be here */}
             </main>
-        </Box>
+        </>
     );
 }
 
