@@ -194,7 +194,7 @@ const Product = () => {
     return (
         <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '1200px', mx: 'auto' }}>
             <SEO 
-                title={`${product.title} | E-Commerce Store`}
+                title={`${product.title} | Clusterly`}
                 description={product.description?.substring(0, 160) || `Buy ${product.title} online with free shipping on orders over $50.`}
                 keywords={`${product.title}, ${product?.attributes?.brand || ''}, online shopping, buy now, e-commerce`}
                 image={product.thumbnail}
@@ -208,7 +208,7 @@ const Product = () => {
                     "description": product.description,
                     "brand": {
                         "@type": "Brand",
-                        "name": product?.attributes?.brand || "E-Commerce Store"
+                        "name": product?.attributes?.brand || "Clusterly"
                     },
                     "offers": {
                         "@type": "Offer",

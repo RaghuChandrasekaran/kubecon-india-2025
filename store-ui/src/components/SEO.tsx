@@ -20,7 +20,7 @@ interface SEOProps {
  * Implements proper Open Graph and Twitter Card meta tags for social sharing
  */
 const SEO: React.FC<SEOProps> = ({
-  title = 'E-Commerce Store - Quality Products at Great Prices',
+  title = 'Clusterly - Quality Products at Great Prices',
   description = 'Shop our wide selection of products. Find great deals on electronics, fashion, home goods, and more.',
   keywords = 'e-commerce, online shopping, electronics, fashion, home goods',
   imageUrl = '/logo.png',
@@ -77,7 +77,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:image" content={absoluteImageUrl} />
       <meta property="og:url" content={url} />
       <meta property="og:type" content={type} />
-      <meta property="og:site_name" content="E-Commerce Store" />
+      <meta property="og:site_name" content="Clusterly" />
 
       {/* Twitter Card meta tags */}
       <meta name="twitter:card" content="summary_large_image" />

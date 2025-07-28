@@ -2,63 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import Badge from '@mui/material/Badge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../CartContext';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import { useTheme } from '@mui/material/styles';
 import ThemeContext from '../ThemeContext';
-import { Container, Tabs, Tab, useMediaQuery, Menu, MenuItem, Drawer, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Container, useMediaQuery } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import InputBase from '@mui/material/InputBase';
-import { styled, alpha } from '@mui/material/styles';
-import PersonIcon from '@mui/icons-material/Person';
+import { styled } from '@mui/material/styles';
 
-// Styled search component
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(3),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    width: '100%',
-    [theme.breakpoints.up('md')]: {
-      width: '20ch',
-    },
-  },
-}));
+// Import new modular components
+import SearchBar from '../../Header/SearchBar';
+import NavigationTabs from '../../Header/NavigationTabs';
+import MobileDrawer from '../../Header/MobileDrawer';
+import UserActions from '../../Header/UserActions';
+import Logo from '../../Header/Logo';
 
 // Styled skip link that properly handles focus state
 const SkipLink = styled('a')(({ theme }) => ({
@@ -82,34 +40,6 @@ const SkipLink = styled('a')(({ theme }) => ({
     fontWeight: 'bold',
     borderRadius: '0 0 4px 0',
   }
-}));
-
-// Styled enhanced cart badge wrapper with improved touch target
-const EnhancedCartBadge = styled('div')(({ theme }) => ({
-  position: 'relative',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  // Larger touch target area (44px is accessibility recommendation)
-  minWidth: '44px',
-  minHeight: '44px',
-  borderRadius: '50%',
-  transition: 'background-color 0.2s',
-  '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  // Pulse animation when cart has items
-  '@keyframes pulse': {
-    '0%': {
-      boxShadow: '0 0 0 0 rgba(255, 255, 255, 0.2)',
-    },
-    '70%': {
-      boxShadow: '0 0 0 8px rgba(255, 255, 255, 0)',
-    },
-    '100%': {
-      boxShadow: '0 0 0 0 rgba(255, 255, 255, 0)',
-    },
-  },
 }));
 
 const Header = () => {
@@ -260,261 +190,47 @@ const Header = () => {
                             </IconButton>
                         )}
                         
-                        <Typography
-                            variant="h6"
-                            component="div"
-                            sx={{ 
-                                flexGrow: isMobile ? 1 : 0, 
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                letterSpacing: '0.5px',
-                                marginRight: 2
-                            }}
-                            onClick={() => navigate('/')}
-                            tabIndex={0}
-                            role="link"
-                            aria-label="Home page"
-                            onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && navigate('/')}
-                        >
-                            E-Commerce Store
-                        </Typography>
+                        <Logo />
 
                         {!isMobile && (
-                            <Search>
-                                <SearchIconWrapper>
-                                    <SearchIcon />
-                                </SearchIconWrapper>
-                                <StyledInputBase
-                                    placeholder="Search products…"
-                                    inputProps={{ 'aria-label': 'search products' }}
-                                    value={searchQuery}
-                                    onChange={handleSearchChange}
-                                    onKeyPress={handleSearch}
-                                    ref={searchInputRef}
-                                />
-                            </Search>
+                            <SearchBar
+                                searchQuery={searchQuery}
+                                onSearchChange={handleSearchChange}
+                                onSearch={handleSearch}
+                                inputRef={searchInputRef}
+                            />
                         )}
 
                         <Box sx={{ flexGrow: 1 }} />
 
-                        <IconButton
-                            size="large"
-                            color="inherit"
-                            onClick={colorMode.toggleColorMode}
-                            sx={{ ml: 1 }}
-                            aria-label={theme.palette.mode === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
-                        >
-                            {theme.palette.mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-                        </IconButton>
-
-                        {/* Enhanced Cart Badge */}
-                        <EnhancedCartBadge>
-                            <IconButton
-                                size="large"
-                                color="inherit"
-                                onClick={() => navigate('/cart')}
-                                aria-label={`Shopping cart with ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
-                                sx={{
-                                    position: 'relative',
-                                    animation: cartCount > 0 ? 'pulse 2s infinite' : 'none',
-                                    minWidth: '44px',
-                                    minHeight: '44px',
-                                }}
-                            >
-                                <Badge 
-                                    badgeContent={cartCount} 
-                                    color="error"
-                                    showZero
-                                    sx={{
-                                        '& .MuiBadge-badge': {
-                                            minWidth: '22px',
-                                            height: '22px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 'bold',
-                                            borderRadius: '11px',
-                                            // Improved visibility with larger offset and outline
-                                            transform: 'scale(1.2) translate(30%, -30%)',
-                                            padding: '0 6px',
-                                            // Add white outline for better contrast
-                                            border: theme.palette.mode === 'dark' ? '2px solid #1a237e' : '2px solid #1976d2',
-                                            backgroundColor: '#f44336',
-                                            color: 'white',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                                        }
-                                    }}
-                                    // Improved position for badge
-                                    anchorOrigin={{
-                                        vertical: 'top',
-                                        horizontal: 'right',
-                                    }}
-                                    // Using component prop for accessibility instead of slotProps
-                                    componentsProps={{
-                                        badge: { 'aria-live': 'polite' }
-                                    }}
-                                >
-                                    <ShoppingCartIcon fontSize="medium" />
-                                </Badge>
-                            </IconButton>
-                        </EnhancedCartBadge>
-
-                        <Button 
-                            color="inherit" 
-                            onClick={() => navigate('/login')}
-                            startIcon={<PersonIcon />}
-                            sx={{ 
-                                ml: 1, 
-                                display: { xs: 'none', sm: 'flex' },
-                                // Add minimum touch target size for button
-                                minHeight: '44px',
-                            }}
-                            aria-label="Login or view account"
-                        >
-                            Login
-                        </Button>
+                        <UserActions
+                            cartCount={cartCount}
+                            colorMode={colorMode}
+                        />
                     </Toolbar>
                 </Container>
 
                 {!isMobile && (
-                    <Box sx={{ backgroundColor: '#37474F' }}> {/* Darker grey-blue instead of bright blue */}
-                        <Container maxWidth="xl">
-                            <Tabs 
-                                value={currentTab}
-                                onChange={handleTabChange}
-                                variant="scrollable"
-                                scrollButtons="auto"
-                                textColor="inherit"
-                                indicatorColor="secondary"
-                                aria-label="Category navigation tabs"
-                                sx={{
-                                    '& .MuiTab-root': {
-                                        minWidth: 100,
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#FFFFFF',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                                        },
-                                        '&.Mui-selected': {
-                                            color: '#FF9800',
-                                        }
-                                    },
-                                    '& .MuiTabs-indicator': {
-                                        backgroundColor: '#FF9800', // Orange indicator instead of white
-                                        height: '3px'
-                                    },
-                                    '& .MuiTabScrollButton-root': {
-                                        color: '#FFFFFF',
-                                    }
-                                }}
-                            >
-                                {categories.map((category, index) => (
-                                    <Tab 
-                                        key={index} 
-                                        label={category.name} 
-                                        aria-label={`View ${category.name} category`}
-                                    />
-                                ))}
-                            </Tabs>
-                        </Container>
-                    </Box>
+                    <NavigationTabs
+                        categories={categories}
+                        currentTab={currentTab}
+                        onTabChange={handleTabChange}
+                    />
                 )}
             </MuiAppBar>
 
-            {/* Mobile Navigation Drawer with improved accessibility */}
-            <Drawer
-                anchor="left"
+            <MobileDrawer
                 open={mobileMenuOpen}
                 onClose={() => setMobileMenuOpen(false)}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Main navigation menu"
                 onKeyDown={handleKeyDown}
-                id="mobile-navigation-drawer"
-                ModalProps={{
-                    // Trap focus within the drawer
-                    disableEnforceFocus: false,
-                    // Return focus to menu button when closed
-                    onClose: () => {
-                        setMobileMenuOpen(false);
-                        if (menuButtonRef.current) {
-                            menuButtonRef.current.focus();
-                        }
-                    }
-                }}
-            >
-                <Box
-                    sx={{ width: 250 }}
-                    role="navigation"
-                    aria-label="Main navigation"
-                >
-                    <List component="nav" aria-label="Category navigation">
-                        <ListItem>
-                            <Search sx={{ width: '100%' }}>
-                                <SearchIconWrapper>
-                                    <SearchIcon aria-hidden="true" />
-                                </SearchIconWrapper>
-                                <StyledInputBase
-                                    placeholder="Search products…"
-                                    inputProps={{ 
-                                        'aria-label': 'search products',
-                                        'aria-describedby': 'mobile-search-help'
-                                    }}
-                                    sx={{ width: '100%' }}
-                                    value={searchQuery}
-                                    onChange={handleSearchChange}
-                                    onKeyPress={handleSearch}
-                                    ref={firstFocusableElementRef}
-                                />
-                                {/* Hidden help text for screen readers */}
-                                <Box 
-                                    id="mobile-search-help" 
-                                    sx={{ 
-                                        position: 'absolute', 
-                                        left: '-10000px',
-                                        top: 'auto',
-                                        width: '1px',
-                                        height: '1px',
-                                        overflow: 'hidden'
-                                    }}
-                                >
-                                    Press Enter to search for products
-                                </Box>
-                            </Search>
-                        </ListItem>
-                        <Divider />
-                        {categories.map((category, index) => (
-                            <ListItem 
-                                key={category.name} 
-                                disablePadding
-                            >
-                                <Button
-                                    fullWidth
-                                    onClick={() => {
-                                        navigate(category.path);
-                                        setMobileMenuOpen(false);
-                                    }}
-                                    role="menuitem"
-                                    aria-label={`Navigate to ${category.name} category`}
-                                    sx={{
-                                        justifyContent: 'flex-start',
-                                        textTransform: 'none',
-                                        py: 1.5,
-                                        px: 2,
-                                        color: 'text.primary',
-                                        '&:focus-visible': {
-                                            outline: `2px solid ${theme.palette.primary.main}`,
-                                            outlineOffset: '-2px',
-                                            backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                                        }
-                                    }}
-                                >
-                                    {category.name}
-                                </Button>
-                            </ListItem>
-                        ))}
-                    </List>
-                </Box>
-            </Drawer>
+                categories={categories}
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+                onSearch={handleSearch}
+                firstFocusableElementRef={firstFocusableElementRef}
+                menuButtonRef={menuButtonRef}
+            />
+            
             <main id="main-content" tabIndex={-1}>
                 {/* Main content will be here */}
             </main>
