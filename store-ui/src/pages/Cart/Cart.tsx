@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { getCart, updateQuantity, removeFromCart, getShippingCost, formatCurrency } from "../../api/cart"
+import { getCart, updateQuantity, removeFromCart, getShippingCost, formatCurrency, updateCartWithShipping } from "../../api/cart"
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -25,6 +25,8 @@ const Cart = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+    const [shippingMethod, setShippingMethod] = useState('default');
+    const [cartWithShipping, setCartWithShipping] = useState<any>(null);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -60,12 +62,43 @@ const Cart = () => {
         }
     };
 
+    const handleShippingMethodChange = async (method: string) => {
+        try {
+            setShippingMethod(method);
+            const updatedCart = await updateCartWithShipping(method);
+            setCartWithShipping(updatedCart);
+            showMessage('Shipping method updated', 'success');
+        } catch (error) {
+            console.error('Error updating shipping method:', error);
+            showMessage('Failed to update shipping method', 'error');
+        }
+    };
+
     // Load cart on mount
     useEffect(() => {
         refreshCart().catch(() => {
             showMessage('Failed to load cart', 'error');
         });
     }, [refreshCart]);
+
+    // Update cart with shipping when cart changes
+    useEffect(() => {
+        if (cart?.items && cart.items.length > 0) {
+            updateCartWithShipping(shippingMethod)
+                .then(setCartWithShipping)
+                .catch(() => {
+                    // Fallback to original cart with calculated shipping
+                    const shipping = getShippingCost(shippingMethod);
+                    if (cart) {
+                        setCartWithShipping({
+                            ...cart,
+                            shippingCost: shipping,
+                            total: ((cart as any).subtotal || 0) + ((cart as any).taxAmount || 0) + shipping
+                        });
+                    }
+                });
+        }
+    }, [cart, shippingMethod]);
 
     return (
         <Box sx={{ p: isMobile ? 1 : 2, maxWidth: 1200, mx: 'auto' }}>
@@ -126,9 +159,11 @@ const Cart = () => {
                     {/* Order Summary */}
                     <Grid item xs={12} md={4}>
                         <CartSummary 
-                            cart={cart}
+                            cart={cartWithShipping || cart}
+                            shippingMethod={shippingMethod}
                             onCheckout={() => navigate('/checkout')}
                             onContinueShopping={() => navigate('/')}
+                            onShippingMethodChange={handleShippingMethodChange}
                         />
                     </Grid>
                     

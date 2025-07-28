@@ -17,7 +17,7 @@ dev:
     labelSelector:
       app: search-deployment
     container: search
-    devImage: ghcr.io/loft-sh/devspace-containers/javascript:18-alpine
+    devImage: "image.registry.local:5001/search:dev"
     sync:
       - path: ./:/app
         excludePaths:

@@ -1,9 +1,6 @@
 #!/bin/bash
 set +e
 
-echo "Building Cart Service..."
-gradle --no-daemon build
-
 COLOR_CYAN="\033[0;36m"
 COLOR_RESET="\033[0m"
 

@@ -1,0 +1,46 @@
+FROM python:3.11-alpine
+
+# Update latest security patches
+RUN apk update && apk upgrade
+
+# Install common development tools
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    vim \
+    nano \
+    gcc \
+    musl-dev \
+    linux-headers
+
+# Set working directory
+WORKDIR /app
+
+# Install pipenv
+RUN pip install pipenv
+
+# Copy Pipfile and Pipfile.lock
+COPY Pipfile Pipfile.lock ./
+
+# Install dependencies
+RUN pipenv install --dev --system --deploy
+
+# Install development tools
+RUN pip install debugpy
+
+# Copy source code
+COPY . .
+
+# Make devspace_start.sh executable
+RUN chmod +x devspace_start.sh
+
+# Create a non-root user for development
+RUN addgroup -g 1001 -S python && \
+    adduser -S pythonuser -u 1001 -G python
+
+# Change ownership of the app directory
+RUN chown -R pythonuser:python /app
+
+# Switch to non-root user
+USER pythonuser

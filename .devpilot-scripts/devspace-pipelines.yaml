@@ -2,7 +2,7 @@ version: v2beta1
 name: common-scripts
 
 localRegistry:
-  enabled: true
+  enabled: false
 
 vars:
   REGISTRY: "image.registry.local:5001"
@@ -17,16 +17,27 @@ vars:
 
 # Generic images template - will be inherited by services
 images:
-  app:
+  # Development image - uses Dockerfile.dev for hot reload and development tools
+  dev:
     image: ${REGISTRY}/${SERVICE_NAME}
-    dockerfile: ./Dockerfile
-    buildKit:
-      inCluster: {}
+    dockerfile: ./Dockerfile.dev
     tags:
-    - ${IMAGE_TAG}
+    - dev
+    custom:
+      command: |-
+        docker build --tag ${runtime.images.dev.image}:${runtime.images.dev.tag} . -f Dockerfile.dev && docker push ${runtime.images.dev.image}:${runtime.images.dev.tag}
 
 # Define reusable pipelines to reduce duplication
 pipelines:
+  # Build development image
+  build-dev: 
+    run: |-
+      build_images dev --tag dev
+  
+  # Build production image
+  build-prod: 
+    run: |-
+      build_images prod --tag ${IMAGE_TAG}
   # Enhanced logging functions
   enhanced-logging:
     run: |
@@ -334,7 +345,16 @@ commands:
   dev:
     command: devspace use namespace ${NAMESPACE} && devspace dev --skip-build --skip-deploy
     description: "Start development mode with hot reload"
-  
+   # Development commands
+  develop:
+    command: devspace use namespace ${NAMESPACE} && devspace run dev
+    description: "Start the cart service in development mode with hot reload and debugging support."
+  debug:
+    command: devspace use namespace ${NAMESPACE} && devspace run-pipeline debug-server
+    description: "Attach to the debug server for remote debugging. Does not modify the application, but allows you to debug it remotely."
+  stop:
+    command: devspace use namespace ${NAMESPACE} && devspace purge
+    description: "Stop the cart service and clean up resources."
   # Core deployment commands  
   deploy:
     command: |
@@ -342,7 +362,7 @@ commands:
       if [[ "$*" == *"--profile azure"* ]]; then
         # Initialize enhanced logging
         devspace run-pipeline enhanced-logging
-        devspace build $@
+        devspace run-pipeline build-dev
         # Source the logging functions
         source ~/.devspace/vars/logging.sh
         
@@ -380,7 +400,7 @@ commands:
         log_success "✨ Azure deployment completed successfully! ✨"
       else
         # Local deployment
-        devspace build $@
+        devspace run-pipeline build-dev
         mkdir -p ~/.devspace/vars
         # Set environment variables for pipelines
         echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
@@ -411,7 +431,7 @@ commands:
         
         # Then build and push with Azure profile
         log_step "Building and pushing image to ACR: ${AZURE_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
-        if devspace build --profile azure; then
+        if devspace run-pipeline build-dev --profile azure; then
           log_success "Image built and pushed to ACR successfully"
           log_info "Image: ${AZURE_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
         else
@@ -422,7 +442,7 @@ commands:
         log_success "✨ Azure image build completed successfully! ✨"
       else
         # Local build
-        devspace build $@
+        devspace run-pipeline build-dev
       fi
     description: "Build image (use --profile azure for Azure Container Registry)"
   

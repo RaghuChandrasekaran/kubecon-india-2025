@@ -1,0 +1,47 @@
+FROM node:18-alpine
+
+# Update latest security patches
+RUN apk update && apk upgrade
+
+# Install common development tools
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    vim \
+    nano
+
+# Create a non-root user for development early
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S reactjs -u 1001 -G nodejs
+
+# Set working directory and change ownership
+WORKDIR /app
+RUN chown reactjs:nodejs /app
+
+# Switch to non-root user early
+USER reactjs
+
+# Copy package files
+COPY --chown=reactjs:nodejs package*.json ./
+
+# Install dependencies (including dev dependencies)
+RUN npm install
+
+# Install global development tools
+USER root
+RUN npm install -g nodemon typescript @types/node
+
+USER reactjs
+
+# Copy source code with proper ownership
+COPY --chown=reactjs:nodejs . .
+
+# Pre-build the React application during image creation (HUGE time saver!)
+RUN npm run build
+
+# Run tests to validate build
+RUN npm run test -- --coverage --ci --silent --passWithNoTests
+
+# Make devspace_start.sh executable
+RUN chmod +x devspace_start.sh

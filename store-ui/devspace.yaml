@@ -9,12 +9,25 @@ vars:
   K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/store-ui/"
   K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/store-ui/"
 
+pipelines:
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
+    run: |-
+      start_dev store-ui
+  # Custom pipeline to run the debug server. You can run this pipeline via `devspace run-pipeline debug-server`
+  debug-server:
+    run: |-
+      echo "Running cart debug server."
+      start_dev store-ui-debug
+
 dev:
+# Development configuration for the store-ui service
+# This configuration allows you to run the store-ui service in development mode with hot reload and debugging
   store-ui:
     labelSelector:
       app: store-ui-deployment
     container: store-ui
-    devImage: ghcr.io/loft-sh/devspace-containers/typescript:18-alpine
+    devImage: "image.registry.local:5001/store-ui:dev"
     sync:
       - path: ./:/app
         excludePaths:
@@ -44,3 +57,17 @@ dev:
         value: "http://localhost:8082/"
       - name: REACT_APP_USERS_URL_BASE
         value: "http://localhost:8083/"
+
+# Remote Debug configuration for the store-ui service
+  store-ui-debug:
+    labelSelector:
+      app: store-ui-deployment
+    container: store-ui
+    devImage: "image.registry.local:5001/store-ui:dev"
+    command:
+      - npm
+      - run
+      - start
+    ports:
+      - port: "3000:3000"
+      - port: "4000:4000"

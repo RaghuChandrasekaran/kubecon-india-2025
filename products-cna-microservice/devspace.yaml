@@ -33,7 +33,7 @@ dev:
     labelSelector:
       app: products-deployment
     container: products
-    devImage: ghcr.io/loft-sh/devspace-containers/javascript:18-alpine
+    devImage: "image.registry.local:5001/products:dev"
     sync:
       - path: ./:/app
         excludePaths:

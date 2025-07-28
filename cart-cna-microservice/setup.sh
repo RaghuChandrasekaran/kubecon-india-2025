@@ -8,7 +8,7 @@ CMD=$1
 function run_app() {
   echo "🔁 Starting Spring Boot app with hot reload and debugger on port $DEBUG_PORT..."
 
-  local gradle_cmd="./gradlew bootRun"
+  local gradle_cmd="gradle bootRun"
   echo "📦 Executing: $gradle_cmd"
   eval $gradle_cmd
 }
@@ -16,7 +16,7 @@ function run_app() {
 function run_tests() {
   echo "🧪 Running tests..."
 
-  local test_cmd="./gradlew test --no-daemon"
+  local test_cmd="gradle test --no-daemon"
   echo "📦 Executing: $test_cmd"
   eval $test_cmd
 }

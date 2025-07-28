@@ -34,7 +34,7 @@ dev:
     labelSelector:
       app: cart-deployment
     container: cart
-    devImage: ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
+    devImage: "image.registry.local:5001/cart:dev"
     sync:
       - excludePaths:
           - .git/
@@ -46,11 +46,6 @@ dev:
       command: ./devspace_start.sh
     ssh:
       enabled: true
-    proxyCommands:
-      - command: devspace
-      - command: kubectl
-      - command: helm
-      - gitCredentials: true
     ports:
       - port: "7000:7000"
       - port: "6000:6000"

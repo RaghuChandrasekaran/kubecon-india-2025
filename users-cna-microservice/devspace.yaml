@@ -32,7 +32,7 @@ dev:
     labelSelector:
       app: users-deployment
     container: users
-    devImage: ghcr.io/loft-sh/devspace-containers/python:3-alpine
+    devImage: "image.registry.local:5001/users:dev"
     sync:
       - path: ./:/app
         excludePaths:

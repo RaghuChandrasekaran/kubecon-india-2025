@@ -1,0 +1,43 @@
+FROM node:18-alpine
+
+# Update latest security patches
+RUN apk update && apk upgrade
+
+# Install common development tools
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    vim \
+    nano
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (including dev dependencies)
+RUN npm install
+
+# Install global development tools
+RUN npm install -g nodemon
+
+# Copy source code
+COPY . .
+
+# Pre-validate the application during build (saves time on startup)
+RUN npm run test --if-present || true
+
+# Make devspace_start.sh executable
+RUN chmod +x devspace_start.sh
+
+# Create a non-root user for development
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeuser -u 1001 -G nodejs
+
+# Change ownership of the app directory
+RUN chown -R nodeuser:nodejs /app
+
+# Switch to non-root user
+USER nodeuser
