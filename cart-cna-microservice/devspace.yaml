@@ -68,11 +68,12 @@ dev:
     container: cart
     command:
       - java
-      - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:6000
+      - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:6000
       - -Dlogging.level.root=INFO
       - -jar
       - /app/app.jar
     ports:
+      - port: "7000:7000"
       - port: "6000:6000"
 
 
