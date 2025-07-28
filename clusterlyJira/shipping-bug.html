@@ -1,0 +1,349 @@
+    <!DOCTYPE html>
+<!-- 
+    File: slide4-shipping-bug.html
+    Location: /clusterlyJira/slide4-shipping-bug.html
+    Description: Jira ticket STORE-2198 - Cart service backend missing shipping cost in total calculation
+    Component: Cart Service Backend Bug Report
+    Priority: High
+    Related Issue: Shopping cart total calculation excluding shipping costs
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clusterly Jira - STORE-2198</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: #f4f5f7; color: #172B4D; }
+        .top-bar { background: #1a1a2e; color: white; display: flex; padding: 0 20px; align-items: center; height: 56px; }
+        .logo { font-size: 24px; font-weight: bold; margin-right: 25px; }
+        .nav-item { margin-right: 25px; font-size: 14px; color: #f0f0f0; }
+        .search { margin-left: auto; }
+        .search input { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 3px; }
+        .profile { margin-left: 25px; display: flex; align-items: center; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #6554C0; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        
+        .breadcrumbs { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; font-size: 14px; }
+        .breadcrumb-item { color: #0052CC; }
+        
+        .container { max-width: 1200px; margin: 0 auto; display: flex; padding: 20px; }
+        .main-content { flex-grow: 1; background: white; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-right: 20px; }
+        .sidebar { width: 300px; }
+        
+        .issue-header { padding: 20px; border-bottom: 1px solid #ddd; position: relative; }
+        .issue-key { background: #DE350B; color: white; padding: 4px 8px; border-radius: 3px; font-size: 14px; margin-right: 10px; }
+        .issue-type { display: inline-block; vertical-align: middle; margin-right: 10px; }
+        .issue-title { margin: 15px 0; font-size: 24px; }
+        
+        .actions-panel { padding: 10px 20px; background: #f4f5f7; border-bottom: 1px solid #ddd; display: flex; align-items: center; }
+        .action-btn { background: #0052CC; color: white; border: none; border-radius: 3px; padding: 8px 15px; margin-right: 10px; font-weight: 500; cursor: pointer; }
+        .action-btn.secondary { background: transparent; color: #0052CC; border: 1px solid #0052CC; }
+        
+        .content { padding: 20px; }
+        .section { margin-bottom: 30px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .label { font-weight: 600; color: #5e6c84; margin-bottom: 10px; font-size: 14px; }
+        
+        .field { display: flex; margin-bottom: 15px; }
+        .field-label { width: 120px; color: #5e6c84; font-size: 14px; flex-shrink: 0; }
+        .field-value { flex-grow: 1; }
+        
+        .tag { background: #DFE1E6; color: #42526E; padding: 2px 8px; border-radius: 3px; font-size: 12px; margin-right: 5px; }
+        .priority { display: flex; align-items: center; }
+        .priority-icon { width: 16px; height: 16px; border-radius: 50%; margin-right: 5px; }
+        .priority-icon.high { background: #DE350B; }
+        
+        .status { background: #0065FF; color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; }
+        .status.open { background: #0065FF; }
+        .status-dot { width: 8px; height: 8px; background: white; border-radius: 50%; margin-right: 5px; }
+        
+        .impact-box { background: #FFF4E6; border: 1px solid #FFAB00; border-radius: 3px; padding: 15px; margin: 15px 0; }
+        .impact-header { color: #974F0C; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
+        .warning-icon { color: #FFAB00; margin-right: 5px; font-weight: bold; }
+        
+        .people-section { background: white; border-radius: 3px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .people-header { font-weight: 600; margin-bottom: 15px; font-size: 14px; color: #172B4D; }
+        .person { display: flex; align-items: center; margin-bottom: 10px; }
+        .person-avatar { width: 24px; height: 24px; border-radius: 50%; background: #0052CC; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; margin-right: 10px; flex-shrink: 0; }
+        .person-name { font-size: 14px; font-weight: 500; }
+        .person-role { font-size: 12px; color: #5e6c84; margin-top: 2px; }
+        
+        .dates-section { background: white; border-radius: 3px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .date-field { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; align-items: center; }
+        .date-label { color: #5e6c84; flex-shrink: 0; margin-right: 10px; }
+        .date-value { text-align: right; flex-shrink: 0; }
+        
+        .history { background: #f4f5f7; padding: 15px; border-radius: 3px; margin-top: 20px; }
+        .comment { border-left: 3px solid #ddd; padding: 12px 15px; margin: 15px 0; background: white; border-radius: 0 3px 3px 0; }
+        .comment-header { display: flex; align-items: center; margin-bottom: 8px; }
+        .comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: #0052CC; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; margin-right: 10px; }
+        .comment-author { font-weight: 500; font-size: 14px; }
+        .comment-time { color: #5e6c84; font-size: 12px; margin-left: 10px; }
+        .comment-content { font-size: 14px; line-height: 1.5; }
+        .comment.highlight { border-left-color: #0065FF; background: #DEEBFF; }
+        .screenshot { width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 3px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="logo">🏢 Clusterly</div>
+        <div class="nav-item">Projects</div>
+        <div class="nav-item">Issues</div>
+        <div class="nav-item">Dashboards</div>
+        <div class="search">
+            <input type="text" placeholder="Search..." />
+        </div>
+        <div class="profile">
+            <div class="avatar">A</div>
+        </div>
+    </div>
+    
+    <div class="breadcrumbs">
+        <span class="breadcrumb-item">Projects</span> &gt;
+        <span class="breadcrumb-item">Clusterly Store</span> &gt;
+        <span class="breadcrumb-item">STORE-2198</span>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="issue-header">
+                <div>
+                    <span class="issue-key">STORE-2198</span>
+                    <span class="issue-type">🐛</span>
+                </div>
+                <h1 class="issue-title">Cart service backend missing shipping cost in total calculation</h1>
+                <div style="margin-top: 10px;">
+                    <div class="priority">
+                        <div class="priority-icon high"></div>
+                        <span>High Priority</span>
+                    </div>
+                    <span class="status open"><span class="status-dot"></span> Open</span>
+                </div>
+            </div>
+            
+            <div class="actions-panel">
+                <button class="action-btn">Edit</button>
+                <button class="action-btn secondary">Comment</button>
+                <button class="action-btn secondary">Assign</button>
+                <button class="action-btn secondary">More</button>
+            </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="label">Description</div>
+                </div>
+                <div class="field-value">
+                    <p><strong>🔍 QA Story Validation:</strong> During validation of cart features story STORY-1456, QA discovered a calculation discrepancy.</p>
+                    
+                    <p><strong>Issue:</strong> Shipping costs are properly passed from UI to backend, but total calculation appears incorrect.</p>
+                    
+                    <img src="BugScreenshot.png" alt="Shopping Cart Bug Screenshot" class="screenshot" style="width: 100%; max-width: 800px; border: 2px solid #FF5630; border-radius: 5px; margin: 15px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+                    <p><em>Bug evidence showing the cart calculation discrepancy.</em></p>
+                    
+                    <div class="impact-box">
+                        <div class="impact-header"><span class="warning-icon">⚠️</span> Investigation Required</div>
+                        <p><strong>Evidence:</strong> UI sends shipping data correctly, but backend total calculation requires verification.</p>
+                    </div>
+                    
+                    <p><strong>Scope:</strong> Backend cart service calculation logic needs analysis to confirm shipping cost aggregation.</p>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="field">
+                    <div class="field-label">Steps to Reproduce</div>
+                    <div class="field-value">
+                        <ol>
+                            <li>Add any item to shopping cart</li>
+                            <li>Navigate to shopping cart page (/cart)</li>
+                            <li>Enter shipping address to trigger shipping cost calculation</li>
+                            <li>Open browser DevTools → Network tab</li>
+                            <li>Observe cart update API calls</li>
+                            <li>Check payload being sent vs response received</li>
+                        </ol>
+                        <p><strong>Observation:</strong> Shipping cost appears in request payload but total in response may not reflect it</p>
+                        <p><strong>Needs Investigation:</strong> Backend calculation logic validation required</p>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">QA Evidence</div>
+                    <div class="field-value">
+                        <p><strong>Test Scenario:</strong> Evening Platform Pumps (₹145.99) + Tax (₹26.28) + Shipping (₹99.00)</p>
+                        <ul>
+                            <li>UI Shipping Value: ₹99.00 ✓ (Standard Shipping selected)</li>
+                            <li>API Request Payload: Contains shipping cost ✓</li>
+                            <li>Final Total Displayed: ₹172.27 ❓</li>
+                            <li>Expected Total: ₹271.27 (145.99 + 26.28 + 99.00)</li>
+                        </ul>
+                        <p><strong>Bug Evidence Screenshot:</strong></p>
+                        <img src="data:image/png;base64,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" alt="Shopping Cart Bug Screenshot" class="screenshot" style="border: 2px solid #FF5630; border-radius: 5px;" />
+                        <p><em>Screenshot shows ₹99.00 shipping cost selected but final total ₹172.27 appears to exclude shipping.</em></p>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">Environment</div>
+                    <div class="field-value">
+                        <p>Reproduced across:</p>
+                        <ul>
+                            <li>Chrome 127.0 (Desktop & Mobile)</li>
+                            <li>Safari 17.5 (Desktop & Mobile)</li>
+                            <li>Firefox 128.0 (Desktop)</li>
+                        </ul>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <span class="tag">Backend</span>
+                            <span class="tag">Cart Service</span>
+                            <span class="tag">Story Bug</span>
+                            <span class="tag">Analysis Required</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history">
+                <div class="label">Issue Activity & Investigation</div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #00875A;">P</div>
+                        <div class="comment-author">Priya Sharma (QA)</div>
+                        <div class="comment-time">3 hours ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p><strong>Story validation issue:</strong> Found this while testing STORY-1456. Shipping cost shows ₹99.00 but total is only ₹172.27 instead of expected ₹271.27.</p>
+                        <p>Attached screenshot shows the discrepancy. Need backend investigation.</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #36B37E;">M</div>
+                        <div class="comment-author">Marcus Johnson</div>
+                        <div class="comment-time">2 hours ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p><strong>Started investigation:</strong> Cart service endpoint looks correct initially. Need deeper analysis of shipping cost aggregation logic.</p>
+                        <p>Got pulled into P0 customer call. @Tom - can someone else continue?</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #DE350B;">S</div>
+                        <div class="comment-author">Steve Martinez (PM)</div>
+                        <div class="comment-time">1 hour ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>Cart calculation accuracy is critical. Need thorough backend analysis and testing with various shipping scenarios.</p>
+                        <p>@Tom - please assign someone to complete Marcus's investigation.</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #0052CC;">T</div>
+                        <div class="comment-author">Tom Manager</div>
+                        <div class="comment-time">45 minutes ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>@Aditya - good opportunity to dive into backend cart logic. Continue from Marcus's findings and analyze the shipping calculation flow.</p>
+                    </div>
+                </div>
+                
+                <div class="comment highlight">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #6554C0;">A</div>
+                        <div class="comment-author">Aditya Kumar</div>
+                        <div class="comment-time">15 minutes ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>🎯 <strong>Taking over investigation!</strong> Will build on Marcus's findings and analyze the backend cart calculation logic.</p>
+                        <p><strong>Plan:</strong> Review shipping cost aggregation, test with QA's scenario, and provide fix within 48 hours.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="people-section">
+                <div class="people-header">People</div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #6554C0;">A</div>
+                    <div>
+                        <div class="person-name">Aditya Kumar</div>
+                        <div class="person-role">Assignee</div>
+                    </div>
+                </div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #00875A;">P</div>
+                    <div>
+                        <div class="person-name">Priya Sharma</div>
+                        <div class="person-role">Reporter (QA)</div>
+                    </div>
+                </div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #36B37E;">M</div>
+                    <div>
+                        <div class="person-name">Marcus Johnson</div>
+                        <div class="person-role">Initial Investigator</div>
+                    </div>
+                </div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #0052CC;">T</div>
+                    <div>
+                        <div class="person-name">Tom Manager</div>
+                        <div class="person-role">Watcher</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dates-section">
+                <div class="people-header">Dates</div>
+                <div class="date-field">
+                    <span class="date-label">Created</span>
+                    <span class="date-value">Jul 28, 2025</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Updated</span>
+                    <span class="date-value">Jul 28, 2025</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Due Date</span>
+                    <span class="date-value">Jul 30, 2025</span>
+                </div>
+            </div>
+            
+            <div class="dates-section">
+                <div class="people-header">Details</div>
+                <div class="date-field">
+                    <span class="date-label">Issue Type</span>
+                    <span class="date-value">Bug</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Priority</span>
+                    <span class="date-value">High</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Components</span>
+                    <span class="date-value">Cart Service Backend</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Version</span>
+                    <span class="date-value">2.4.0</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Sprint</span>
+                    <span class="date-value">Q3.5</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Story Points</span>
+                    <span class="date-value">8</span>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

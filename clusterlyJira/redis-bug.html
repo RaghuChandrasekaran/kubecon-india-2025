@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clusterly Jira - STORE-2249</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: #f4f5f7; color: #172B4D; }
+        .top-bar { background: #1a1a2e; color: white; display: flex; padding: 0 20px; align-items: center; height: 56px; }
+        .logo { font-size: 24px; font-weight: bold; margin-right: 25px; }
+        .nav-item { margin-right: 25px; font-size: 14px; color: #f0f0f0; }
+        .search { margin-left: auto; }
+        .search input { background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 10px; border-radius: 3px; }
+        .profile { margin-left: 25px; display: flex; align-items: center; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #6554C0; color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        
+        .breadcrumbs { background: white; padding: 10px 20px; border-bottom: 1px solid #ddd; font-size: 14px; }
+        .breadcrumb-item { color: #0052CC; }
+        
+        .container { max-width: 1200px; margin: 0 auto; display: flex; padding: 20px; }
+        .main-content { flex-grow: 1; background: white; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-right: 20px; }
+        .sidebar { width: 300px; }
+        
+        .issue-header { padding: 20px; border-bottom: 1px solid #ddd; position: relative; }
+        .issue-key { background: #6554C0; color: white; padding: 4px 8px; border-radius: 3px; font-size: 14px; margin-right: 10px; }
+        .issue-type { display: inline-block; vertical-align: middle; margin-right: 10px; }
+        .issue-title { margin: 15px 0; font-size: 24px; }
+        
+        .actions-panel { padding: 10px 20px; background: #f4f5f7; border-bottom: 1px solid #ddd; display: flex; align-items: center; }
+        .action-btn { background: #0052CC; color: white; border: none; border-radius: 3px; padding: 8px 15px; margin-right: 10px; font-weight: 500; cursor: pointer; }
+        .action-btn.secondary { background: transparent; color: #0052CC; border: 1px solid #0052CC; }
+        
+        .content { padding: 20px; }
+        .section { margin-bottom: 30px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .label { font-weight: 600; color: #5e6c84; margin-bottom: 10px; font-size: 14px; }
+        
+        .field { display: flex; margin-bottom: 15px; }
+        .field-label { width: 120px; color: #5e6c84; font-size: 14px; }
+        .field-value { flex-grow: 1; }
+        
+        .tag { background: #DFE1E6; color: #42526E; padding: 2px 8px; border-radius: 3px; font-size: 12px; margin-right: 5px; }
+        .priority { display: flex; align-items: center; }
+        .priority-icon { width: 16px; height: 16px; border-radius: 50%; margin-right: 5px; }
+        .priority-icon.low { background: #36B37E; }
+        .priority-icon.medium { background: #FFAB00; }
+        
+        .status { background: #0065FF; color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; display: inline-flex; align-items: center; }
+        .status.inprogress { background: #0065FF; }
+        .status-dot { width: 8px; height: 8px; background: white; border-radius: 50%; margin-right: 5px; }
+        
+        .workaround { background: #E3FCEF; border: 1px solid #ABF5D1; border-radius: 3px; padding: 15px; margin: 15px 0; }
+        .workaround-header { color: #006644; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; }
+        .checkmark { color: #36B37E; margin-right: 5px; font-weight: bold; }
+        
+        .people-section { background: white; border-radius: 3px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .people-header { font-weight: 600; margin-bottom: 15px; font-size: 14px; color: #172B4D; }
+        .person { display: flex; align-items: center; margin-bottom: 10px; }
+        .person-avatar { width: 24px; height: 24px; border-radius: 50%; background: #0052CC; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; margin-right: 10px; }
+        .person-name { font-size: 14px; }
+        .person-role { font-size: 12px; color: #5e6c84; }
+        
+        .dates-section { background: white; border-radius: 3px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .date-field { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .date-label { color: #5e6c84; }
+        
+        .history { background: #f4f5f7; padding: 15px; border-radius: 3px; margin-top: 20px; }
+        .comment { border-left: 3px solid #ddd; padding: 12px 15px; margin: 15px 0; background: white; border-radius: 0 3px 3px 0; }
+        .comment-header { display: flex; align-items: center; margin-bottom: 8px; }
+        .comment-avatar { width: 24px; height: 24px; border-radius: 50%; background: #0052CC; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; margin-right: 10px; }
+        .comment-author { font-weight: 500; font-size: 14px; }
+        .comment-time { color: #5e6c84; font-size: 12px; margin-left: 10px; }
+        .comment-content { font-size: 14px; line-height: 1.5; }
+        .comment.highlight { border-left-color: #0065FF; background: #DEEBFF; }
+        
+        .error-box { background: #FFEBE6; border: 1px solid #FF8F73; border-radius: 3px; padding: 15px; margin: 15px 0; }
+        .error-box pre { background: rgba(0,0,0,0.05); padding: 10px; border-radius: 3px; overflow-x: auto; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="logo">🏢 Clusterly</div>
+        <div class="nav-item">Projects</div>
+        <div class="nav-item">Issues</div>
+        <div class="nav-item">Dashboards</div>
+        <div class="search">
+            <input type="text" placeholder="Search..." />
+        </div>
+        <div class="profile">
+            <div class="avatar">A</div>
+        </div>
+    </div>
+    
+    <div class="breadcrumbs">
+        <span class="breadcrumb-item">Projects</span> &gt;
+        <span class="breadcrumb-item">Clusterly Store</span> &gt;
+        <span class="breadcrumb-item">STORE-2249</span>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <div class="issue-header">
+                <div>
+                    <span class="issue-key">STORE-2249</span>
+                    <span class="issue-type">🐛</span>
+                </div>
+                <h1 class="issue-title">Cart updates fail silently during Redis restarts</h1>
+                <div style="margin-top: 10px;">
+                    <div class="priority">
+                        <div class="priority-icon medium"></div>
+                        <span>Medium Priority</span>
+                    </div>
+                    <span class="status inprogress"><span class="status-dot"></span> In Progress</span>
+                </div>
+            </div>
+            
+            <div class="actions-panel">
+                <button class="action-btn">Edit</button>
+                <button class="action-btn secondary">Comment</button>
+                <button class="action-btn secondary">Assign</button>
+                <button class="action-btn secondary">More</button>
+            </div>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="label">Description</div>
+                </div>
+                <div class="field-value">
+                    <p>QA has reported that cart updates fail silently when Redis is temporarily unavailable (e.g., during maintenance restarts). User actions (add to cart, quantity changes) appear to work but are lost, and stale state persists after Redis recovers. This creates a confusing experience where clicks have no effect but no error is shown.</p>
+                    
+                    <div class="error-box">
+                        <strong>Error from logs:</strong>
+                        <pre>org.springframework.data.redis.RedisConnectionFailureException: Unable to connect to Redis; nested exception is io.lettuce.core.RedisConnectionException: Unable to connect to localhost:6379</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="field">
+                    <div class="field-label">Steps to Reproduce</div>
+                    <div class="field-value">
+                        <ol>
+                            <li>Stop or restart Redis container while application is running</li>
+                            <li>Try adding items to cart during the downtime</li>
+                            <li>Observe that UI shows success but data is lost</li>
+                            <li>After Redis recovers, the cart state is inconsistent</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">Analysis Notes</div>
+                    <div class="field-value">
+                        <p>Current implementation doesn't provide proper error handling or retries when Redis operations fail. The backend returns 500s but the UI doesn't properly surface these errors to users.</p>
+                        <p>Our staged Redis restarts typically last under 5 seconds, but we currently have no resilience for these brief outages.</p>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <div class="field-label">Business Impact</div>
+                    <div class="field-value">
+                        <p>Low direct revenue impact as Redis restarts are rare in production. However, user experience impact is significant when it happens - frustrating silent failures and lost cart items.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <span class="tag">Resilience</span>
+                            <span class="tag">Cart</span>
+                            <span class="tag">UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history">
+                <div class="label">Issue History & Comments</div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #00875A;">J</div>
+                        <div class="comment-author">Jamie Lee (QA)</div>
+                        <div class="comment-time">4 days ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>Found this during our chaos testing day. We simulated Redis restarts every 5 minutes and noticed all cart operations are completely lost during the restart window. Nothing in the UI indicates an error.</p>
+                        <p>Attached HAR file with network traces showing the silent 500s.</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #00C7E6;">R</div>
+                        <div class="comment-author">Rachel Kim (Engineering Lead)</div>
+                        <div class="comment-time">3 days ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>Good catch, Jamie! This is definitely something we should fix. We're doing Redis maintenance occasionally and this could affect users.</p>
+                        <p>Not a P1 since Redis failures are rare, but would be a good learning opportunity for someone. Maybe Aditya can look at this since he's still getting familiar with our stack?</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #0052CC;">T</div>
+                        <div class="comment-author">Tom Manager</div>
+                        <div class="comment-time">2 days ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>@Aditya - Can you take a look at this? It's related to the Cart service. We need to add proper retry logic when Redis is temporarily unavailable.</p>
+                        <p>I'll be on a customer call tomorrow, but this would be a good first real bug fix for you. I know it's not super urgent but it's a clean, contained issue that will help you understand our resilience patterns.</p>
+                    </div>
+                </div>
+                
+                <div class="comment">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #6554C0;">A</div>
+                        <div class="comment-author">Aditya Kumar</div>
+                        <div class="comment-time">1 day ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>I'll look into this. Looking at the code, I think we need retry logic. I'm trying to set up Redis locally to reproduce the issue.</p>
+                        <p>Do we have any established patterns for handling retries in our reactive services?</p>
+                    </div>
+                </div>
+                
+                <div class="comment highlight">
+                    <div class="comment-header">
+                        <div class="comment-avatar" style="background: #0065FF;">A</div>
+                        <div class="comment-author">Aditya Kumar</div>
+                        <div class="comment-time">4 hours ago</div>
+                    </div>
+                    <div class="comment-content">
+                        <p>🔍 <strong>Using Kind+DevSpace, I was able to easily reproduce and fix this!</strong> I created a local setup with Redis that I could restart while testing the cart functionality.</p>
+                        <p>The issue is in CartController.java where we're not properly handling Redis connection failures or implementing retries:</p>
+                        <pre style="background: #f4f5f7; padding: 10px; border-radius: 3px; overflow-x: auto;"><code>// Current problematic code:
+cartOps.set(c.getCustomerId(), c).subscribe();  // This fails silently on Redis issues
+
+// My proposed fix with Resilience4j:
+cartOps.set(c.getCustomerId(), c)
+    .retryWhen(Retry.backoff(3, Duration.ofMillis(200)))
+    .doOnError(e -> LOG.error("Redis write failed after retries", e))
+    .subscribe();</code></pre>
+                        <p>I've implemented a full fix with Resilience4j for proper retry logic with exponential backoff. This will handle brief Redis outages without user impact.</p>
+                        <p>Also added proper error responses to the API so the UI can show meaningful errors if all retries fail.</p>
+                        <p>PR <a href="#" style="color: #0052CC;">#4921</a> is ready for review.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="people-section">
+                <div class="people-header">People</div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #0065FF;">A</div>
+                    <div>
+                        <div class="person-name">Aditya Kumar</div>
+                        <div class="person-role">Assignee</div>
+                    </div>
+                </div>
+                <div class="person">
+                    <div class="person-avatar" style="background: #00875A;">J</div>
+                    <div>
+                        <div class="person-name">Jamie Lee</div>
+                        <div class="person-role">Reporter</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dates-section">
+                <div class="people-header">Dates</div>
+                <div class="date-field">
+                    <span class="date-label">Created</span>
+                    <span>Jul 23, 2025</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Updated</span>
+                    <span>Jul 27, 2025</span>
+                </div>
+            </div>
+            
+            <div class="dates-section">
+                <div class="people-header">Details</div>
+                <div class="date-field">
+                    <span class="date-label">Issue Type</span>
+                    <span>Bug</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Priority</span>
+                    <span>Medium</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Components</span>
+                    <span>Cart Service</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Sprint</span>
+                    <span>Clusterly 2025 Q3.4</span>
+                </div>
+                <div class="date-field">
+                    <span class="date-label">Story Points</span>
+                    <span>5</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
