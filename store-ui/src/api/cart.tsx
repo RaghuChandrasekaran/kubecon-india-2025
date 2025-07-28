@@ -37,6 +37,12 @@ export const addToCart = async (item: any) => {
         } else {
             cart.items.push(item);
         }
+        
+        // Include shipping information if available
+        if (cart.shippingMethod) {
+            cart.shippingCost = getShippingCost(cart.shippingMethod);
+        }
+        
         // Send updated cart
         const response = await axiosClient.post(`${cartUrl}cart`, cart);
         return response.data;
@@ -67,6 +73,12 @@ export const updateQuantity = async (productId: string, quantity: number) => {
             cart.items = cart.items.map((item: any) =>
                 item.productId === productId ? { ...item, quantity } : item
             );
+            
+            // Include shipping information if available
+            if (cart.shippingMethod) {
+                cart.shippingCost = getShippingCost(cart.shippingMethod);
+            }
+            
             const response = await axiosClient.post(`${cartUrl}cart`, cart);
             return response.data;
         } catch (fallbackError) {
@@ -89,6 +101,12 @@ export const removeFromCart = async (productId: string) => {
             let cart = await getCart();
             if (!cart || !cart.items) throw new Error('Cart not found');
             cart.items = cart.items.filter((item: any) => item.productId !== productId);
+            
+            // Include shipping information if available
+            if (cart.shippingMethod) {
+                cart.shippingCost = getShippingCost(cart.shippingMethod);
+            }
+            
             const response = await axiosClient.post(`${cartUrl}cart`, cart);
             return response.data;
         } catch (fallbackError) {
@@ -123,27 +141,45 @@ export const updateCartWithShipping = async (shippingMethod: string) => {
         const cart = await getCart();
         if (!cart) throw new Error('Cart not found');
         
-        // Calculate shipping cost on frontend since backend doesn't handle it
+        // Calculate shipping cost on frontend
         const shippingCost = getShippingCost(shippingMethod);
         
-        // Create updated cart with shipping information
+        // Create updated cart with shipping information to send to backend
         const cartWithShipping = {
             ...cart,
             shippingMethod,
-            shippingCost,
-            // Recalculate total: backend total (subtotal + tax) + shipping
-            total: (cart.total || 0) + shippingCost,
-            // Keep backend calculations for subtotal and tax
-            subtotal: cart.subtotal || 0,
-            taxAmount: cart.taxAmount || 0
+            shippingCost
         };
         
-        // Note: We don't send this back to the backend since it doesn't handle shipping
-        // The backend only handles item management and tax calculation
-        return cartWithShipping;
+        // Send the cart with shipping info to backend so it can calculate final total
+        const response = await axiosClient.post(`${cartUrl}cart`, cartWithShipping);
+        return response.data;
     } catch (error) {
         console.error("Error updating cart with shipping:", error);
         throw error;
+    }
+}
+
+// Update only shipping method for existing cart
+export const updateShippingMethod = async (shippingMethod: string) => {
+    try {
+        const customerId = getCurrentCustomerId();
+        const shippingCost = getShippingCost(shippingMethod);
+        
+        // Send shipping update to backend
+        const updateData = {
+            customerId,
+            shippingMethod,
+            shippingCost,
+            action: 'update_shipping'
+        };
+        
+        const response = await axiosClient.put(`${cartUrl}cart/shipping`, updateData);
+        return response.data;
+    } catch (error) {
+        // Fallback to full cart update if shipping endpoint doesn't exist
+        console.warn("Shipping update endpoint not available, using full cart update");
+        return updateCartWithShipping(shippingMethod);
     }
 }
 

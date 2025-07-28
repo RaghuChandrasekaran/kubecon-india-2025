@@ -32,4 +32,10 @@ public class Cart {
     
     @Schema(description = "Currency for the cart", example = "INR")
     private String currency;
+    
+    @Schema(description = "Shipping method selected", example = "standard")
+    private String shippingMethod;
+    
+    @Schema(description = "Shipping cost", example = "99.0")
+    private float shippingCost;
 }

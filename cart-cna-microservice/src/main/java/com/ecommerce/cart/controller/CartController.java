@@ -1,6 +1,7 @@
 package com.ecommerce.cart.controller;
 
 import com.ecommerce.cart.model.Cart;
+import com.ecommerce.cart.model.ShippingUpdateRequest;
 import com.ecommerce.cart.service.CartService;
 import com.ecommerce.cart.service.TaxCalculationService;
 import io.swagger.v3.oas.annotations.Operation;

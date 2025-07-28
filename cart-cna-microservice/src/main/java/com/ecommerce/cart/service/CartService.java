@@ -54,9 +54,20 @@ public class CartService {
             TaxCalculationService.TaxBreakdown taxBreakdown = taxCalculationService.calculateTaxForCart(c);
             c.setSubtotal(taxBreakdown.getSubtotal());
             c.setTaxAmount(taxBreakdown.getTaxAmount());
-            c.setTotal(taxBreakdown.getTotal());
+            float finalTotal = taxBreakdown.getTotal();
+            c.setTotal(finalTotal);
 
-            LOG.info("Cart calculation completed: {}", taxBreakdown);
+            // Set default shipping if not provided
+            if (c.getShippingMethod() == null || c.getShippingMethod().isEmpty()) {
+                c.setShippingMethod("default");
+                c.setShippingCost(0.0f);
+            }
+            // Calculate final total including shipping if present
+            if (c.getShippingCost() > 0) {
+                finalTotal += c.getShippingCost();
+            }
+
+            LOG.info("Cart calculation completed: {}, Final Total with shipping: {}", taxBreakdown, finalTotal);
 
             return cartOps.set(c.getCustomerId(), c).then(); // Propagate this operation
         });

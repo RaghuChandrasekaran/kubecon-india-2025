@@ -18,6 +18,7 @@ const CartSummary = ({ cart, shippingMethod = 'default', onCheckout, onContinueS
     const subtotal = cart?.subtotal || 0;
     const tax = cart?.tax || cart?.taxAmount || 0;
     const shipping = cart?.shipping || cart?.shippingCost || getShippingCost(shippingMethod);
+    // Use backend calculated total if available and shipping is included, otherwise calculate manually
     const total = cart?.total || (subtotal + tax + shipping);
 
     const shippingMethods = [

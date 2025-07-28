@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { getCart, updateQuantity, removeFromCart, getShippingCost, formatCurrency, updateCartWithShipping } from "../../api/cart"
+import { getCart, updateQuantity, removeFromCart, getShippingCost, formatCurrency, updateCartWithShipping, updateShippingMethod } from "../../api/cart"
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -75,7 +75,8 @@ const Cart = () => {
     const handleShippingMethodChange = async (method: string) => {
         try {
             setShippingMethod(method);
-            const updatedCart = await updateCartWithShipping(method);
+            // Use the more efficient shipping update method
+            const updatedCart = await updateShippingMethod(method);
             setCartWithShipping(updatedCart);
             showMessage('Shipping method updated', 'success');
         } catch (error) {
