@@ -11,8 +11,19 @@ interface CartItem {
     thumbnail?: string;
 }
 
+interface Cart {
+    customerId?: string;
+    items: CartItem[];
+    subtotal?: number;
+    taxAmount?: number;
+    total?: number;
+    currency?: string;
+    shippingMethod?: string;
+    shippingCost?: number;
+}
+
 interface CartContextType {
-    cart: { items: CartItem[] } | null;
+    cart: Cart | null;
     cartCount: number;
     cartTotal: number;
     loading: boolean;
@@ -27,7 +38,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [cart, setCart] = useState<{ items: CartItem[] } | null>(null);
+    const [cart, setCart] = useState<Cart | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,8 +48,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [cart?.items]);
 
     const cartTotal = useMemo(() => {
-        return cart?.items?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
-    }, [cart?.items]);
+        // Use backend calculated total if available, otherwise calculate from items
+        return cart?.total || cart?.items?.reduce((total, item) => total + (item.price * item.quantity), 0) || 0;
+    }, [cart?.total, cart?.items]);
 
     // Clear error function
     const clearError = useCallback(() => {
@@ -119,15 +131,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Make API call
             await updateQuantity(sku, quantity);
             
-            // Refresh cart to get server state
-            await refreshCart();
+            // Don't refresh cart immediately - let the parent component handle it
+            // This prevents double API calls when shipping calculations need to be updated
         } catch (err: any) {
             setError(err.message || 'Failed to update item quantity');
             // Revert optimistic update on error
             setCart(previousCartState);
             throw err;
         }
-    }, [cart, refreshCart]);
+    }, [cart]);
 
     // Remove item from cart with optimistic updates
     const removeItem = useCallback(async (sku: string) => {
@@ -147,15 +159,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Make API call
             await removeFromCart(sku);
             
-            // Refresh cart to get server state
-            await refreshCart();
+            // Don't refresh cart immediately - let the parent component handle it
         } catch (err: any) {
             setError(err.message || 'Failed to remove item from cart');
             // Revert optimistic update on error
             setCart(previousCartState);
             throw err;
         }
-    }, [cart, refreshCart]);
+    }, [cart]);
 
     // Load cart on mount
     useEffect(() => {

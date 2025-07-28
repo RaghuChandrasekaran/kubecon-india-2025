@@ -8,9 +8,10 @@ interface CartItemProps {
     item: any;
     onUpdateQuantity: (item: any, quantity: number) => void;
     onRemoveItem: (sku: string) => void;
+    isUpdating?: boolean;
 }
 
-const CartItem = ({ item, onUpdateQuantity, onRemoveItem }: CartItemProps) => {
+const CartItem = ({ item, onUpdateQuantity, onRemoveItem, isUpdating = false }: CartItemProps) => {
     const theme = useTheme();
 
     return (
@@ -58,7 +59,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemoveItem }: CartItemProps) => {
                             size="small"
                             color="primary" 
                             onClick={() => onUpdateQuantity(item, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
+                            disabled={item.quantity <= 1 || isUpdating}
                             sx={{ p: 0.5 }}
                         >
                             <RemoveCircleIcon fontSize="small" />
@@ -70,6 +71,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemoveItem }: CartItemProps) => {
                             size="small"
                             color="primary"
                             onClick={() => onUpdateQuantity(item, item.quantity + 1)}
+                            disabled={isUpdating}
                             sx={{ p: 0.5 }}
                         >
                             <AddCircleIcon fontSize="small" />

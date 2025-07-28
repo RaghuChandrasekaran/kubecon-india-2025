@@ -49,30 +49,52 @@ export const addToCart = async (item: any) => {
 export const updateQuantity = async (productId: string, quantity: number) => {
     try {
         const customerId = getCurrentCustomerId();
-        let cart = await getCart();
-        if (!cart || !cart.items) throw new Error('Cart not found');
-        cart.items = cart.items.map((item: any) =>
-            item.productId === productId ? { ...item, quantity } : item
-        );
-        const response = await axiosClient.post(`${cartUrl}cart`, cart);
+        // Use a more efficient approach by sending the update directly
+        const updateData = {
+            customerId,
+            productId,
+            quantity,
+            action: 'update'
+        };
+        const response = await axiosClient.put(`${cartUrl}cart/item`, updateData);
         return response.data;
     } catch (error) {
-        console.error("Error updating cart item quantity:", error);
-        throw error;
+        // Fallback to the old method if the new endpoint doesn't exist
+        console.warn("New cart update endpoint not available, using fallback method");
+        try {
+            let cart = await getCart();
+            if (!cart || !cart.items) throw new Error('Cart not found');
+            cart.items = cart.items.map((item: any) =>
+                item.productId === productId ? { ...item, quantity } : item
+            );
+            const response = await axiosClient.post(`${cartUrl}cart`, cart);
+            return response.data;
+        } catch (fallbackError) {
+            console.error("Error updating cart item quantity:", fallbackError);
+            throw fallbackError;
+        }
     }
 }
 
 export const removeFromCart = async (productId: string) => {
     try {
         const customerId = getCurrentCustomerId();
-        let cart = await getCart();
-        if (!cart || !cart.items) throw new Error('Cart not found');
-        cart.items = cart.items.filter((item: any) => item.productId !== productId);
-        const response = await axiosClient.post(`${cartUrl}cart`, cart);
+        // Use a more efficient approach by sending the removal directly
+        const response = await axiosClient.delete(`${cartUrl}cart/item/${customerId}/${productId}`);
         return response.data;
     } catch (error) {
-        console.error("Error removing item from cart:", error);
-        throw error;
+        // Fallback to the old method if the new endpoint doesn't exist
+        console.warn("New cart remove endpoint not available, using fallback method");
+        try {
+            let cart = await getCart();
+            if (!cart || !cart.items) throw new Error('Cart not found');
+            cart.items = cart.items.filter((item: any) => item.productId !== productId);
+            const response = await axiosClient.post(`${cartUrl}cart`, cart);
+            return response.data;
+        } catch (fallbackError) {
+            console.error("Error removing item from cart:", fallbackError);
+            throw fallbackError;
+        }
     }
 }
 
@@ -97,19 +119,28 @@ export const updateCartWithShipping = async (shippingMethod: string) => {
     try {
         const customerId = getCurrentCustomerId();
         
-        // Get current cart
+        // Get current cart from backend (this has the latest tax calculations)
         const cart = await getCart();
         if (!cart) throw new Error('Cart not found');
         
-        // Update cart with shipping method
-        const updatedCart = {
+        // Calculate shipping cost on frontend since backend doesn't handle it
+        const shippingCost = getShippingCost(shippingMethod);
+        
+        // Create updated cart with shipping information
+        const cartWithShipping = {
             ...cart,
-            shippingMethod
+            shippingMethod,
+            shippingCost,
+            // Recalculate total: backend total (subtotal + tax) + shipping
+            total: (cart.total || 0) + shippingCost,
+            // Keep backend calculations for subtotal and tax
+            subtotal: cart.subtotal || 0,
+            taxAmount: cart.taxAmount || 0
         };
         
-        // Save updated cart and return it
-        const response = await axiosClient.post(`${cartUrl}cart`, updatedCart);
-        return response.data;
+        // Note: We don't send this back to the backend since it doesn't handle shipping
+        // The backend only handles item management and tax calculation
+        return cartWithShipping;
     } catch (error) {
         console.error("Error updating cart with shipping:", error);
         throw error;

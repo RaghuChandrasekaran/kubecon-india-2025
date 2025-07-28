@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import { Typography, Divider, useTheme, useMediaQuery } from '@mui/material';
 import Button from '@mui/material/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
@@ -40,21 +40,31 @@ const Cart = () => {
         setOpenSnackbar(true);
     };
 
+    const [isUpdating, setIsUpdating] = useState(false);
+    const shippingUpdateRef = useRef<NodeJS.Timeout | null>(null);
+
     const handleUpdateQuantity = async (item: any, newQuantity: number) => {
-        if (newQuantity < 1) return;
+        if (newQuantity < 1 || isUpdating) return;
         
         try {
+            setIsUpdating(true);
             await updateItemQuantity(item.productId || item.sku, newQuantity);
+            // Refresh cart after update to sync with server
+            await refreshCart();
             showMessage('Cart updated successfully', 'success');
         } catch (error) {
             console.error('Error updating quantity:', error);
             showMessage('Failed to update cart', 'error');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
     const handleRemoveItem = async (sku: string) => {
         try {
             await removeItem(sku);
+            // Refresh cart after removal to sync with server
+            await refreshCart();
             showMessage('Item removed from cart', 'success');
         } catch (error) {
             console.error('Error removing item:', error);
@@ -81,22 +91,41 @@ const Cart = () => {
         });
     }, [refreshCart]);
 
-    // Update cart with shipping when cart changes
+    // Update cart with shipping when cart changes - debounced to prevent multiple calls
     useEffect(() => {
         if (cart?.items && cart.items.length > 0) {
-            updateCartWithShipping(shippingMethod)
-                .then(setCartWithShipping)
-                .catch(() => {
-                    // Fallback to original cart with calculated shipping
-                    const shipping = getShippingCost(shippingMethod);
-                    if (cart) {
-                        setCartWithShipping({
-                            ...cart,
-                            shippingCost: shipping,
-                            total: ((cart as any).subtotal || 0) + ((cart as any).taxAmount || 0) + shipping
-                        });
-                    }
-                });
+            // Clear existing timeout
+            if (shippingUpdateRef.current) {
+                clearTimeout(shippingUpdateRef.current);
+            }
+            
+            shippingUpdateRef.current = setTimeout(() => {
+                updateCartWithShipping(shippingMethod)
+                    .then(setCartWithShipping)
+                    .catch((error) => {
+                        console.error('Error updating cart with shipping:', error);
+                        // Fallback to original cart with calculated shipping
+                        const shipping = getShippingCost(shippingMethod);
+                        if (cart) {
+                            setCartWithShipping({
+                                ...cart,
+                                shippingMethod,
+                                shippingCost: shipping,
+                                // Use backend total (subtotal + tax) + shipping
+                                total: cart.total || 0,
+                                // Preserve backend calculations
+                                subtotal: cart.subtotal || 0,
+                                taxAmount: cart.taxAmount || 0
+                            });
+                        }
+                    });
+            }, 500); // Debounce for 500ms
+
+            return () => {
+                if (shippingUpdateRef.current) {
+                    clearTimeout(shippingUpdateRef.current);
+                }
+            };
         }
     }, [cart, shippingMethod]);
 
@@ -150,6 +179,7 @@ const Cart = () => {
                                         item={item}
                                         onUpdateQuantity={handleUpdateQuantity}
                                         onRemoveItem={handleRemoveItem}
+                                        isUpdating={isUpdating}
                                     />
                                 </Box>
                             ))}
