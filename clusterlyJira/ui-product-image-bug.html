@@ -133,11 +133,53 @@
             <div class="content">
                 <div class="section">
                     <div class="label">Description</div>
-                    <p><strong>Bug Summary:</strong> In the "Recommended for You" section (Cart and Product pages), all product items are displaying the same image (<code>/assets/images/deals/mobile.webp</code>) regardless of the actual product type.</p>
+                    <p><strong>Bug Summary:</strong> In the "Recommended for You" section (Cart and Product pages), all product items are displaying default placeholder images instead of their actual product images. The system is showing generic camera/placeholder icons rather than the intended product thumbnails.</p>
                     
-                    <p><strong>Expected Behavior:</strong> Each recommended product should display its unique product image corresponding to the specific item (headphones, fitness watch, power bank, charger).</p>
+                    <p><strong>Expected Behavior:</strong> Each recommended product should display its actual product image corresponding to the specific item (kitchen oven, kurtha collection, running shoes, smartphone).</p>
                     
-                    <p><strong>Actual Behavior:</strong> All 4 recommended products show the same mobile phone image.</p>
+                    <p><strong>Actual Behavior:</strong> All 4 recommended products show default placeholder/camera icons instead of their respective product images.</p>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <div style="border: 2px solid #DE350B; border-radius: 8px; padding: 20px; background: #fff; max-width: 600px; margin: 0 auto;">
+                            <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+                                <div style="text-align: center; border: 1px solid #ddd; padding: 10px; width: 120px;">
+                                    <div style="width: 60px; height: 60px; background: #f0f0f0; border: 2px dashed #999; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                        <span style="font-size: 24px; color: #999;">📷</span>
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: bold;">Premium Kitchen Oven</div>
+                                    <div style="color: #FF9800; font-size: 12px;">₹2,999.00</div>
+                                </div>
+                                <div style="text-align: center; border: 1px solid #ddd; padding: 10px; width: 120px;">
+                                    <div style="width: 60px; height: 60px; background: #f0f0f0; border: 2px dashed #999; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                        <span style="font-size: 24px; color: #999;">📷</span>
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: bold;">Traditional Kurtha</div>
+                                    <div style="color: #FF9800; font-size: 12px;">₹5,999.00</div>
+                                </div>
+                                <div style="text-align: center; border: 1px solid #ddd; padding: 10px; width: 120px;">
+                                    <div style="width: 60px; height: 60px; background: #f0f0f0; border: 2px dashed #999; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                        <span style="font-size: 24px; color: #999;">📷</span>
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: bold;">Stylish Shoes</div>
+                                    <div style="color: #FF9800; font-size: 12px;">₹1,499.00</div>
+                                </div>
+                                <div style="text-align: center; border: 1px solid #ddd; padding: 10px; width: 120px;">
+                                    <div style="width: 60px; height: 60px; background: #f0f0f0; border: 2px dashed #999; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
+                                        <span style="font-size: 24px; color: #999;">📷</span>
+                                    </div>
+                                    <div style="font-size: 11px; font-weight: bold;">Smartphone Pro</div>
+                                    <div style="color: #FF9800; font-size: 12px;">₹899.00</div>
+                                </div>
+                            </div>
+                            <div style="background: #FFF4E6; border: 1px solid #FFAB00; padding: 10px; border-radius: 4px;">
+                                <strong style="color: #DE350B;">⚠️ ISSUE:</strong> 
+                                <span style="color: #974F0C;">All products showing identical placeholder camera icons instead of actual product images!</span>
+                            </div>
+                        </div>
+                        <p style="color: #666; font-size: 12px; margin-top: 15px;">
+                            <strong>Visual Evidence:</strong> Cart page "Recommended for You" section showing all products with identical placeholder camera icons instead of actual product images
+                        </p>
+                    </div>
                     
                     <div class="impact-box">
                         <div class="impact-header">
@@ -145,50 +187,53 @@
                             User Experience Impact
                         </div>
                         <ul>
-                            <li>Poor visual representation of product diversity</li>
-                            <li>Confusing user experience - users may think all products are the same</li>
-                            <li>Reduced trust in product recommendations</li>
-                            <li>Potential decrease in recommendation click-through rates</li>
+                            <li>Poor visual representation - placeholder icons instead of appealing product images</li>
+                            <li>Confusing user experience - users cannot visually distinguish between products</li>
+                            <li>Reduced trust in product recommendations and overall site quality</li>
+                            <li>Significant decrease in recommendation click-through rates</li>
+                            <li>Unprofessional appearance affecting brand credibility</li>
                         </ul>
                     </div>
                 </div>
                 
                 <div class="section">
                     <div class="label">Root Cause Analysis</div>
-                    <p>The issue is in the <code>RecommendedProducts.tsx</code> component where all mock products are hardcoded to use the same image path:</p>
+                    <p>The issue is in the <code>RecommendedProducts.tsx</code> component where the product images are not loading properly, causing the system to fall back to default placeholder camera icons instead of displaying the actual product images:</p>
                     
                     <div class="code-snippet">
                         <div class="file-path">store-ui/src/components/Cart/RecommendedProducts.tsx (lines 20-50)</div>
                         <pre>const defaultProducts: RecommendedProduct[] = [
     {
         id: '1',
-        title: 'Wireless Bluetooth Headphones',
+        title: 'Premium Kitchen Oven',
         price: 2999,
-        image: '/assets/images/deals/mobile.webp',  // ❌ Wrong image
-        vendor: 'TechBrand'
+        image: '/assets/images/deals/oven.webp',      // ❌ Image not loading properly
+        vendor: 'KitchenPro'
     },
     {
         id: '2', 
-        title: 'Smart Fitness Watch',
+        title: 'Traditional Kurtha Collection',
         price: 5999,
-        image: '/assets/images/deals/mobile.webp',  // ❌ Wrong image
-        vendor: 'FitTech'
+        image: '/assets/images/deals/kurtha.webp',    // ❌ Image not loading properly
+        vendor: 'EthnicWear'
     },
     {
         id: '3',
-        title: 'Portable Power Bank', 
+        title: 'Stylish Running Shoes', 
         price: 1499,
-        image: '/assets/images/deals/mobile.webp',  // ❌ Wrong image
-        vendor: 'PowerPlus'
+        image: '/assets/images/deals/shoes.jpg',      // ❌ Image not loading properly
+        vendor: 'SportMax'
     },
     {
         id: '4',
-        title: 'USB-C Fast Charger',
+        title: 'Latest Smartphone Pro',
         price: 899,
-        image: '/assets/images/deals/mobile.webp',  // ❌ Wrong image
-        vendor: 'ChargeMax'
+        image: '/assets/images/deals/mobile.webp',    // ❌ Image not loading properly
+        vendor: 'TechZone'
     }
-];</pre>
+];
+
+// Result: All images fail to load → Default placeholder camera icon displayed</pre>
                     </div>
                 </div>
                 
@@ -213,59 +258,59 @@
                 
                 <div class="section">
                     <div class="label">Proposed Solution</div>
-                    <p>Update the image paths in the mock data to use appropriate images for each product type:</p>
+                    <p>Investigate and fix the image loading issue. Potential solutions:</p>
                     
                     <div class="code-snippet">
-                        <div class="file-path">Suggested fix for RecommendedProducts.tsx</div>
-                        <pre>const defaultProducts: RecommendedProduct[] = [
+                        <div class="file-path">Option 1: Fix image paths and ensure assets are available</div>
+                        <pre>// Verify image files exist in public/assets/images/deals/ directory
+// Update paths if needed:
+const defaultProducts: RecommendedProduct[] = [
     {
         id: '1',
-        title: 'Wireless Bluetooth Headphones',
+        title: 'Premium Kitchen Oven',
         price: 2999,
-        image: '/assets/images/deals/headphones.webp',  // ✅ Appropriate image
-        vendor: 'TechBrand'
+        image: '/assets/images/deals/oven.webp',      // ✅ Verify file exists
+        vendor: 'KitchenPro'
     },
-    {
-        id: '2', 
-        title: 'Smart Fitness Watch',
-        price: 5999,
-        image: '/assets/images/deals/watch.webp',       // ✅ Appropriate image
-        vendor: 'FitTech'
-    },
-    {
-        id: '3',
-        title: 'Portable Power Bank', 
-        price: 1499,
-        image: '/assets/images/deals/powerbank.webp',   // ✅ Appropriate image
-        vendor: 'PowerPlus'
-    },
-    {
-        id: '4',
-        title: 'USB-C Fast Charger',
-        price: 899,
-        image: '/assets/images/deals/charger.webp',     // ✅ Appropriate image
-        vendor: 'ChargeMax'
-    }
+    // ... other products
 ];</pre>
                     </div>
                     
-                    <p><strong>Alternative Solution:</strong> If specific product images are not available, use existing diverse images from the deals folder:</p>
-                    <ul>
-                        <li>Headphones: <code>/assets/images/deals/oven.webp</code></li>
-                        <li>Fitness Watch: <code>/assets/images/deals/kurtha.webp</code></li>
-                        <li>Power Bank: <code>/assets/images/deals/shoes.jpg</code></li>
-                        <li>Charger: Keep <code>/assets/images/deals/mobile.webp</code></li>
-                    </ul>
+                    <div class="code-snippet">
+                        <div class="file-path">Option 2: Add proper error handling for missing images</div>
+                        <pre>// Add fallback handling in ImageOptimizer component
+const ImageOptimizer = ({ src, alt, fallbackSrc = '/assets/images/placeholder.jpg' }) => {
+    const [hasError, setHasError] = useState(false);
+    
+    const handleError = () => {
+        if (!hasError) {
+            setHasError(true);
+            // Try fallback image or show proper placeholder
+        }
+    };
+    
+    return (
+        &lt;img 
+            src={hasError ? fallbackSrc : src}
+            alt={alt}
+            onError={handleError}
+        /&gt;
+    );
+};</pre>
+                    </div>
+                    
+                    <p><strong>Immediate Fix:</strong> Ensure all referenced image files exist in the public assets directory and are accessible.</p>
                 </div>
                 
                 <div class="section">
                     <div class="label">Acceptance Criteria</div>
                     <ul>
-                        <li>✅ Each recommended product displays a unique image</li>
-                        <li>✅ Images are visually distinct and appropriate for the product type</li>
-                        <li>✅ No broken image links</li>
+                        <li>✅ Each recommended product displays its actual product image (no placeholder icons)</li>
+                        <li>✅ Images load properly without falling back to default camera icons</li>
+                        <li>✅ All image paths are valid and assets are accessible</li>
                         <li>✅ Changes apply to both Cart and Product page recommendations</li>
-                        <li>✅ Images load properly on different screen sizes</li>
+                        <li>✅ Images load properly on different screen sizes and devices</li>
+                        <li>✅ Proper error handling for missing images with meaningful fallbacks</li>
                     </ul>
                 </div>
                 
@@ -279,7 +324,9 @@
                             <span class="comment-time">just now</span>
                         </div>
                         <div class="comment-content">
-                            <strong>Initial Bug Report:</strong> Identified during peer code review. The issue affects user experience in product recommendations. Quick fix needed - should be straightforward to implement by updating the mock data arrays.
+                            <strong>Updated Bug Report:</strong> The issue is more severe than initially thought. All recommended products are showing default placeholder camera icons instead of actual product images. This significantly impacts the user experience and site quality. Assigned to Aditya Kumar for immediate investigation and resolution.
+                            <br><br>
+                            <strong>Screenshot Evidence:</strong> Added visual proof showing all products displaying identical placeholder icons instead of their respective product images.
                         </div>
                     </div>
                 </div>
@@ -290,9 +337,9 @@
             <div class="people-section">
                 <div class="people-header">People</div>
                 <div class="person">
-                    <div class="person-avatar">U</div>
+                    <div class="person-avatar">AK</div>
                     <div>
-                        <div class="person-name">Unassigned</div>
+                        <div class="person-name">Aditya Kumar</div>
                         <div class="person-role">Assignee</div>
                     </div>
                 </div>
