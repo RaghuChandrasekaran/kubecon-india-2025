@@ -21,31 +21,31 @@ const RecommendedProducts = ({ products = [] }: RecommendedProductsProps) => {
     const defaultProducts: RecommendedProduct[] = [
         {
             id: '1',
-            title: 'Wireless Bluetooth Headphones',
+            title: 'Premium Kitchen Oven',
             price: 2999,
-            image: '/assets/images/deals/mobile.webp',
-            vendor: 'TechBrand'
+            image: '/assets/images/default-image.webp',
+            vendor: 'KitchenPro'
         },
         {
             id: '2',
-            title: 'Smart Fitness Watch',
+            title: 'Traditional Kurtha Collection',
             price: 5999,
-            image: '/assets/images/deals/mobile.webp',
-            vendor: 'FitTech'
+            image: '/assets/images/default-image.webp',
+            vendor: 'EthnicWear'
         },
         {
             id: '3',
-            title: 'Portable Power Bank',
+            title: 'Stylish Running Shoes',
             price: 1499,
-            image: '/assets/images/deals/mobile.webp',
-            vendor: 'PowerPlus'
+            image: '/assets/images/default-image.webp',
+            vendor: 'SportMax'
         },
         {
             id: '4',
-            title: 'USB-C Fast Charger',
+            title: 'Latest Smartphone Pro',
             price: 899,
-            image: '/assets/images/deals/mobile.webp',
-            vendor: 'ChargeMax'
+            image: '/assets/images/default-image.webp',
+            vendor: 'TechZone'
         }
     ];
 
@@ -60,92 +60,83 @@ const RecommendedProducts = ({ products = [] }: RecommendedProductsProps) => {
     }
 
     return (
-        <Box sx={{ mt: 4 }}>
-            <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
+        <Box sx={{ mt: 0 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, fontSize: '1.1rem' }}>
                 Recommended for You
             </Typography>
             
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
                 {displayProducts.slice(0, 4).map((product) => (
-                    <Grid item xs={12} sm={6} md={3} key={product.id}>
+                    <Grid item xs={12} key={product.id}>
                         <Card 
                             sx={{ 
-                                height: '100%',
                                 display: 'flex',
-                                flexDirection: 'column',
+                                flexDirection: 'row',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s ease-in-out',
+                                mb: 1.5,
                                 '&:hover': {
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                                    transform: 'scale(1.02)',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                                 }
                             }}
                             onClick={() => handleProductClick(product.id)}
                         >
                             <CardMedia
                                 component="img"
-                                height="160"
                                 image={product.image}
                                 alt={product.title}
-                                sx={{ objectFit: 'cover' }}
+                                sx={{ 
+                                    width: 80,
+                                    height: 80,
+                                    objectFit: 'cover',
+                                    flexShrink: 0,
+                                    borderRadius: '4px 0 0 4px'
+                                }}
                             />
                             <CardContent sx={{ 
                                 flexGrow: 1, 
                                 display: 'flex', 
                                 flexDirection: 'column',
-                                p: 2
+                                p: 1.5,
+                                '&:last-child': { pb: 1.5 }
                             }}>
                                 <Typography 
                                     variant="subtitle2" 
                                     sx={{ 
-                                        mb: 1,
                                         fontWeight: 500,
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         display: '-webkit-box',
                                         WebkitLineClamp: 2,
                                         WebkitBoxOrient: 'vertical',
-                                        lineHeight: 1.3
+                                        lineHeight: 1.2,
+                                        fontSize: '0.8rem',
+                                        mb: 0.5
                                     }}
                                 >
                                     {product.title}
                                 </Typography>
                                 
-                                {product.vendor && (
-                                    <Typography 
-                                        variant="caption" 
-                                        color="text.secondary"
-                                        sx={{ mb: 1 }}
-                                    >
-                                        {product.vendor}
-                                    </Typography>
-                                )}
+                                <Typography 
+                                    variant="caption" 
+                                    color="text.secondary"
+                                    sx={{ fontSize: '0.7rem', mb: 0.5 }}
+                                >
+                                    {product.vendor}
+                                </Typography>
                                 
-                                <Box sx={{ mt: 'auto' }}>
-                                    <Typography 
-                                        variant="h6" 
-                                        color="primary"
-                                        sx={{ 
-                                            fontWeight: 600,
-                                            mb: 1,
-                                            fontSize: '1.1rem'
-                                        }}
-                                    >
-                                        {formatCurrency(product.price)}
-                                    </Typography>
-                                    
-                                    <Button 
-                                        variant="outlined" 
-                                        size="small"
-                                        fullWidth
-                                        sx={{
-                                            textTransform: 'none',
-                                            borderRadius: '6px'
-                                        }}
-                                    >
-                                        View Details
-                                    </Button>
-                                </Box>
+                                <Typography 
+                                    variant="subtitle2" 
+                                    color="primary"
+                                    sx={{ 
+                                        fontWeight: 600,
+                                        fontSize: '0.9rem',
+                                        mt: 'auto'
+                                    }}
+                                >
+                                    {formatCurrency(product.price)}
+                                </Typography>
                             </CardContent>
                         </Card>
                     </Grid>

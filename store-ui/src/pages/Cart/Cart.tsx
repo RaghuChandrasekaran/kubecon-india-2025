@@ -156,7 +156,13 @@ const Cart = () => {
                 <EmptyCart />
             ) : (
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={8}>
+                    {/* Recommended Products - Far Left */}
+                    <Grid item xs={12} md={3}>
+                        <RecommendedProducts />
+                    </Grid>
+                    
+                    {/* Cart Items - Center */}
+                    <Grid item xs={12} md={6}>
                         <Paper 
                             elevation={2} 
                             sx={{ 
@@ -179,8 +185,8 @@ const Cart = () => {
                         </Paper>
                     </Grid>
                     
-                    {/* Order Summary */}
-                    <Grid item xs={12} md={4}>
+                    {/* Order Summary - Far Right */}
+                    <Grid item xs={12} md={3}>
                         <CartSummary 
                             cart={cartWithShipping || cart}
                             shippingMethod={shippingMethod}
@@ -188,11 +194,6 @@ const Cart = () => {
                             onContinueShopping={() => navigate('/')}
                             onShippingMethodChange={handleShippingMethodChange}
                         />
-                    </Grid>
-                    
-                    {/* Recommended Products */}
-                    <Grid item xs={12}>
-                        <RecommendedProducts />
                     </Grid>
                 </Grid>
             )}

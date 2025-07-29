@@ -208,10 +208,6 @@ pipelines:
       log_step "Replacing namespace placeholders with: ${NAMESPACE}"
       find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/${NAMESPACE}/g" {} \;
       
-      # Replace image tags from latest to dev
-      log_step "Replacing image tags from 'latest' to 'dev'"
-      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/:latest/:dev/g" {} \;
-      
       # Create or verify namespace
       log_step "Setting up namespace: ${NAMESPACE}"
       if kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -; then
@@ -220,6 +216,17 @@ pipelines:
         log_error "Failed to configure namespace ${NAMESPACE}"
         exit 1
       fi
+      
+      log_success "Prepared Kubernetes manifests in $TEMP_DIR with namespace: ${NAMESPACE}"
+
+  # Replace image tags for development deployment
+  replace-image-tags-dev:
+    run: |
+      source ~/.devspace/vars/logging.sh
+      source ~/.devspace/vars/temp_dir.env
+      
+      log_step "Replacing image tags from 'latest' to 'dev'"
+      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/:latest/:dev/g" {} \;
       
       log_success "Prepared Kubernetes manifests in $TEMP_DIR with namespace: ${NAMESPACE}"
 
@@ -366,7 +373,7 @@ commands:
       if [[ "$*" == *"--profile azure"* ]]; then
         # Initialize enhanced logging
         devspace run-pipeline enhanced-logging
-        devspace run-pipeline build-dev
+        ../.devpilot-scripts/build-and-push-images.sh -s $SERVICE_NAME -p azure
         # Source the logging functions
         source ~/.devspace/vars/logging.sh
         
@@ -381,6 +388,9 @@ commands:
         # Run pipelines with better feedback
         log_step "Preparing Kubernetes manifests"
         devspace run-pipeline prepare-manifests
+        
+        log_step "Replacing image tags to dev for development deployment"
+        devspace run-pipeline replace-image-tags-dev
         
         log_step "Applying Kubernetes manifests"
         devspace run-pipeline apply-manifests
@@ -404,7 +414,7 @@ commands:
         log_success "✨ Azure deployment completed successfully! ✨"
       else
         # Local deployment
-        devspace run-pipeline build-dev
+        ../.devpilot-scripts/build-and-push-images.sh -s $SERVICE_NAME --dev-only
         mkdir -p ~/.devspace/vars
         # Set environment variables for pipelines
         echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
@@ -412,6 +422,7 @@ commands:
         
         # Run pipelines
         devspace run-pipeline prepare-manifests
+        devspace run-pipeline replace-image-tags-dev
         devspace run-pipeline apply-manifests
         devspace run-pipeline cleanup
       fi
@@ -435,7 +446,7 @@ commands:
         
         # Then build and push with Azure profile
         log_step "Building and pushing image to ACR: ${AZURE_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
-        if devspace run-pipeline build-dev --profile azure; then
+        if ../.devpilot-scripts/build-and-push-images.sh -s $SERVICE_NAME -p azure; then
           log_success "Image built and pushed to ACR successfully"
           log_info "Image: ${AZURE_REGISTRY}/${SERVICE_NAME}:${IMAGE_TAG}"
         else
@@ -446,7 +457,7 @@ commands:
         log_success "✨ Azure image build completed successfully! ✨"
       else
         # Local build
-        devspace run-pipeline build-dev
+        ../.devpilot-scripts/build-and-push-images.sh -s $SERVICE_NAME --dev-only
       fi
     description: "Build image (use --profile azure for Azure Container Registry)"
   
@@ -457,11 +468,11 @@ commands:
       echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
       echo "export K8S_PATH=${K8S_MANIFEST_PATH_LOCAL}" > ~/.devspace/vars/k8s_path.env
       
-      # Run pipelines
+      # Run pipelines - NOTE: No replace-image-tags-dev step, so uses 'latest' tags
       devspace run-pipeline prepare-manifests
-      devspace run-pipeline delete-manifests
+      devspace run-pipeline apply-manifests
       devspace run-pipeline cleanup
-    description: "Remove deployment from cluster"
+    description: "Rollback to latest stable images (uses 'latest' tag instead of 'dev')"
   
   purge:
     command: |
