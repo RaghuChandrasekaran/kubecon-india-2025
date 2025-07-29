@@ -47,9 +47,9 @@ public class CartConfig {
             .stringCommands();
     }
 
-    @PreDestroy
-    public void cleanRedis() {
-        factory.getConnection()
-            .flushDb();
-    }
+//    @PreDestroy
+//    public void cleanRedis() {
+//        factory.getConnection()
+//            .flushDb();
+//    }
 }
