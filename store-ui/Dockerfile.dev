@@ -1,44 +1,17 @@
-FROM node:18-alpine
+FROM ghcr.io/loft-sh/devspace-containers/typescript:18-alpine
 
-# Update latest security patches
-RUN apk update && apk upgrade
-
-# Install common development tools
-RUN apk add --no-cache \
-    git \
-    bash \
-    curl \
-    vim \
-    nano
-
-# Create a non-root user for development early
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S reactjs -u 1001 -G nodejs
-
-# Set working directory and change ownership
 WORKDIR /app
-RUN chown reactjs:nodejs /app
 
-# Switch to non-root user early
-USER reactjs
+# Copy package files first for better caching
+COPY package*.json ./
 
-# Copy package files
-COPY --chown=reactjs:nodejs package*.json ./
+# Install dependencies and clean cache in one layer to reduce size
+RUN npm ci \
+    && npm cache clean --force \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Install dependencies (including dev dependencies)
-RUN npm install
-
-# Install global development tools
-USER root
-RUN npm install -g nodemon typescript @types/node
-
-USER reactjs
-
-# Copy source code with proper ownership
-COPY --chown=reactjs:nodejs . .
-
-# Pre-build the React application during image creation (HUGE time saver!)
-RUN npm run build
+# Copy the startup script
+COPY devspace_start.sh ./
 
 # Make devspace_start.sh executable
 RUN chmod +x devspace_start.sh

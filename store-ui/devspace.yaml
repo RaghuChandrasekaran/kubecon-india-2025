@@ -51,6 +51,16 @@ dev:
         value: "development"
       - name: BROWSER
         value: "none"
+      - name: FAST_REFRESH
+        value: "false"
+      - name: GENERATE_SOURCEMAP
+        value: "false"
+      - name: SKIP_PREFLIGHT_CHECK
+        value: "true"
+      - name: CHOKIDAR_USEPOLLING
+        value: "false"
+      - name: WATCHPACK_POLLING
+        value: "false"
       - name: REACT_APP_CART_URL_BASE
         value: "http://localhost:8080/"
       - name: REACT_APP_PRODUCTS_URL_BASE
