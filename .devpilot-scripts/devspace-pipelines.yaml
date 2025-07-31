@@ -164,7 +164,7 @@ pipelines:
       fi
       
       log_step "Logging into Azure Container Registry using Azure identity..."
-      if az acr login --name kubecondemo2-cfcrhfdceae9g7hf; then
+      if az acr login --name kubecondemo; then
         log_success "Successfully logged into ACR"
       else
         log_error "Failed to log into ACR"

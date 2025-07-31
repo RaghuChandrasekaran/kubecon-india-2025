@@ -37,7 +37,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
 	// Hot reload during dev
-	implementation 'org.springframework.boot:spring-boot-devtools'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.fusesource.jansi:jansi:2.4.0'
 
 	// OpenAPI documentation
