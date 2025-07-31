@@ -138,7 +138,7 @@ fi
 # Set registry URL based on environment
 case "$ENVIRONMENT" in
   "azure")
-    registry_url=${REGISTRY_URL:-"kubecondemo.azurecr.io"}
+    registry_url=${REGISTRY_URL:-"kubecon.azurecr.io"}
     write_progress "Using Azure Container Registry: $registry_url"
     ;;
   "aws")

@@ -8,5 +8,5 @@ resources:
 
 images:
 - name: cart:latest
-  newName: kubecondemo.azurecr.io/cart
+  newName: kubecon.azurecr.io/cart
   newTag: latest

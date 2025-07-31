@@ -9,5 +9,5 @@ resources:
 
 images:
 - name: store-ui:latest
-  newName: kubecondemo.azurecr.io/store-ui
+  newName: kubecon.azurecr.io/store-ui
   newTag: latest

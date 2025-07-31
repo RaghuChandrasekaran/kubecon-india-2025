@@ -7,7 +7,7 @@ localRegistry:
 vars:
   REGISTRY: "image.registry.local:5001"
   AZURE_REGISTRY:
-    default: "kubecondemo.azurecr.io"
+    default: "kubecon.azurecr.io"
   IMAGE_TAG: "latest"
   # Use sanitized username as default namespace
   NAMESPACE:

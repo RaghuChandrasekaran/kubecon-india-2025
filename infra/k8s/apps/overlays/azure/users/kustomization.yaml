@@ -8,5 +8,5 @@ resources:
 
 images:
 - name: users:latest
-  newName: kubecondemo.azurecr.io/users
+  newName: kubecon.azurecr.io/users
   newTag: latest

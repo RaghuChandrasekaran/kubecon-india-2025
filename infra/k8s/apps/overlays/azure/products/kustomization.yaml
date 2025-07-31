@@ -8,5 +8,5 @@ resources:
 
 images:
 - name: products:latest
-  newName: kubecondemo.azurecr.io/products
+  newName: kubecon.azurecr.io/products
   newTag: latest

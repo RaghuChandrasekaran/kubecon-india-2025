@@ -8,5 +8,5 @@ resources:
 
 images:
 - name: search:latest
-  newName: kubecondemo.azurecr.io/search
+  newName: kubecon.azurecr.io/search
   newTag: latest
