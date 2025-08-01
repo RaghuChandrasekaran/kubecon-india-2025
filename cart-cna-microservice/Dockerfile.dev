@@ -1,47 +1,19 @@
-FROM gradle:8-jdk17-alpine
+FROM ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
 
-# Update latest security patches
-RUN apk update && apk upgrade
-
-# Install common development tools
-RUN apk add --no-cache \
-    git \
-    bash \
-    curl \
-    vim \
-    nano
-
-# Set working directory
 WORKDIR /app
 
-# Copy gradle files
+# Copy gradle files first for better caching
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle/ gradle/
 
-# Use the system gradle instead of wrapper to avoid download
-# This uses the pre-installed Gradle 8 from the base image
+# Download dependencies
 RUN gradle dependencies --no-daemon
 
 # Copy source code
 COPY . .
 
-# Make scripts executable
-RUN chmod +x gradlew && \
-    chmod +x devspace_start.sh && \
-    chmod +x setup.sh
-
-# Build the application without running tests (skip tests for local dev)
+# Build the application
 RUN gradle clean build -x test --no-daemon
 
-# Create a non-root user for development
-RUN addgroup -g 1001 -S spring && \
-    adduser -S springuser -u 1001 -G spring
-
-# Change ownership of the app directory
-RUN chown -R springuser:spring /app
-
-# Copy the built JAR to a consistent location for the debug command
-RUN cp /app/build/libs/cart-1.0.0.jar /app/app.jar
-
-# Switch to non-root user
-USER springuser
+# Copy the startup script and make it executable
+RUN chmod +x devspace_start.sh
