@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: products
-  namespace: NAMESPACE_PLACEHOLDER
+  namespace: e-commerce
 spec:
   hosts:
   - "*"
@@ -16,6 +16,6 @@ spec:
       uri: /
     route:
     - destination:
-        host: products-service.NAMESPACE_PLACEHOLDER.svc.cluster.local
+        host: products-service.e-commerce.svc.cluster.local
         port:
           number: 5000

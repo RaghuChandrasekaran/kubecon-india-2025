@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: cart
-  namespace: NAMESPACE_PLACEHOLDER
+  namespace: e-commerce
 spec:
   hosts:
   - "*"
@@ -16,6 +16,6 @@ spec:
       uri: /
     route:
     - destination:
-        host: cart-service.NAMESPACE_PLACEHOLDER.svc.cluster.local
+        host: cart-service.e-commerce.svc.cluster.local
         port:
           number: 7000

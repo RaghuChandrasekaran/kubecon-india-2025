@@ -1,0 +1,10 @@
+version: v2beta1
+name: infra
+
+deployments:
+  infra:
+    # This deployment uses `kubectl` but you can also define `helm` deployments
+    kubectl:
+      manifests:
+        - ../infra/k8s/shared-services/overlays/local/
+      kustomize: true

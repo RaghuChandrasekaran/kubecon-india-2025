@@ -177,7 +177,7 @@ if [ "$MODE" == "app" ] || [ "$MODE" == "both" ]; then
     fi
     
     # Replace namespace placeholder in all yaml files
-    find "$TEMP_DIR" -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/$USER_NAMESPACE/g" {} \; 2>/dev/null
+    find "$TEMP_DIR" -name "*.yaml" -exec sed -i "s/e-commerce/$USER_NAMESPACE/g" {} \; 2>/dev/null
     
     # Single command to uninstall all application components
     write_trash "Uninstalling all application components with a single command..."

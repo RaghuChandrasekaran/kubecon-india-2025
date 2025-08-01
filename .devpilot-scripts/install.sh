@@ -208,7 +208,7 @@ if [ "$MODE" == "app" ] || [ "$MODE" == "both" ]; then
     fi
     
     # Replace namespace placeholder in all yaml files
-    find "$TEMP_DIR" -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/$USER_NAMESPACE/g" {} \;
+    find "$TEMP_DIR" -name "*.yaml" -exec sed -i "s/e-commerce/$USER_NAMESPACE/g" {} \;
     
     # Apply with kustomize
     write_step "Applying application manifests with kustomize..."

@@ -206,7 +206,7 @@ pipelines:
       
       # Replace in all yaml files
       log_step "Replacing namespace placeholders with: ${NAMESPACE}"
-      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/NAMESPACE_PLACEHOLDER/${NAMESPACE}/g" {} \;
+      find $TEMP_DIR -type f -name "*.yaml" -exec sed -i "s/e-commerce/${NAMESPACE}/g" {} \;
       
       # Create or verify namespace
       log_step "Setting up namespace: ${NAMESPACE}"

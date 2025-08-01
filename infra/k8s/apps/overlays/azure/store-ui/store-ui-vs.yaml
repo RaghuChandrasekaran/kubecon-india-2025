@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: store-ui
-  namespace: NAMESPACE_PLACEHOLDER
+  namespace: e-commerce
 spec:
   hosts:
   - "*"
@@ -14,6 +14,6 @@ spec:
         prefix: /
     route:
     - destination:
-        host: store-ui-service.NAMESPACE_PLACEHOLDER.svc.cluster.local
+        host: store-ui-service.e-commerce.svc.cluster.local
         port:
           number: 80            # servicePort in the Service object

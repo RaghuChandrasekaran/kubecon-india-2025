@@ -1,0 +1,77 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: e-commerce-cluster
+
+networking:
+  apiServerAddress: "127.0.0.1"
+
+nodes:
+- role: control-plane
+  image: kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72  # Fixed kubernetes version
+  kubeadmConfigPatches:
+  - |
+    apiVersion: kubeadm.k8s.io/v1beta3
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+    # Store UI            # Ingress
+    - containerPort: 80
+      hostPort: 80
+      protocol: TCP
+    - containerPort: 443
+      hostPort: 443
+      protocol: TCP
+    # Backend Services
+    - containerPort: 30080 # cart service
+      hostPort: 8080
+      protocol: TCP
+    - containerPort: 30081 # product service
+      hostPort: 8081
+      protocol: TCP
+    - containerPort: 30082  # search service
+      hostPort: 8082
+      protocol: TCP
+    - containerPort: 30083  # users service
+      hostPort: 8083
+      protocol: TCP
+    - containerPort: 30084  # store UI service
+      hostPort: 8084
+      protocol: TCP
+    # DB services
+    - containerPort: 32017  # MongoDB
+      hostPort: 27017
+      protocol: TCP
+    - containerPort: 32379   # Redis
+      hostPort: 6379
+      protocol: TCP
+    - containerPort: 32300   # Elasticsearch
+      hostPort: 9200
+      protocol: TCP
+    - containerPort: 32601   # Kibana
+      hostPort: 5601
+      protocol: TCP
+
+# Registry configuration
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".containerd]
+    [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+      runtime_type = "io.containerd.runc.v2"
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"]
+      endpoint = ["https://registry-1.docker.io"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."image.registry.local:5001"]
+      endpoint = ["http://kind-registry:5000"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs]
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."localhost:5001".tls]
+        insecure_skip_verify = true
+    [plugins."io.containerd.grpc.v1.cri".registry.configs."image.registry.local:5001"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."image.registry.local:5001".tls]
+        insecure_skip_verify = true
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."image.registry.local:5001".auth]
+        insecure = true
