@@ -15,18 +15,6 @@ vars:
   # Base directory for Kubernetes manifests
   K8S_DIR: ".."
 
-# Generic images template - will be inherited by services
-images:
-  # Development image - uses Dockerfile.dev for hot reload and development tools
-  dev:
-    image: ${REGISTRY}/${SERVICE_NAME}
-    dockerfile: ./Dockerfile.dev
-    tags:
-    - dev
-    custom:
-      command: |-
-        docker build --tag ${runtime.images.dev.image}:${runtime.images.dev.tag} . -f Dockerfile.dev && docker push ${runtime.images.dev.image}:${runtime.images.dev.tag}
-
 # Define reusable pipelines to reduce duplication
 pipelines:
   # Build development image
@@ -257,32 +245,33 @@ pipelines:
       # Display what was deployed
       log_info "Deployed resources:"
       kubectl get all -n ${NAMESPACE} -l app=${SERVICE_DIR%-deployment}
+
+  # Delete resources using kubectl delete -k
+  delete-k8s-manifests:
+    run: |
+      source ~/.devspace/vars/logging.sh
+      source ~/.devspace/vars/temp_dir.env
+      source ~/.devspace/vars/env_type.env
       
-      # Handle Istio Gateway for Azure environment
-      if [[ "$ENV_TYPE" == "azure" ]]; then
-        log_step "Checking Istio Gateway configuration"
-        
-        # Check if the Istio Gateway exists in the aks-istio-ingress namespace
-        GATEWAY_EXISTS=$(kubectl get gateway -n aks-istio-ingress store-ui-gateway -o name --ignore-not-found)
-        
-        if [ -z "$GATEWAY_EXISTS" ]; then
-          log_info "Creating Istio Gateway in aks-istio-ingress namespace"
-          # Apply the Gateway configuration separately since it's in a different namespace
-          GATEWAY_FILE="${BASE_DIR}/overlays/azure/store-ui/store-ui-gateway.yaml"
-          log_step "🔍 APPLYING GATEWAY: $GATEWAY_FILE"
-          if [ -f "$GATEWAY_FILE" ]; then
-            if kubectl apply -f "$GATEWAY_FILE"; then
-              log_success "Istio Gateway created successfully"
-            else
-              log_warning "Failed to create Istio Gateway"
-            fi
-          else
-            log_warning "Gateway file not found: $GATEWAY_FILE"
-          fi
-        else
-          log_info "Istio Gateway already exists in aks-istio-ingress namespace"
-        fi
+      log_phase "DELETING RESOURCES FROM KUBERNETES USING KUSTOMIZE"
+      
+      # Print all files being deleted for clarity
+      log_step "Listing all Kubernetes manifests to be deleted:"
+      find $TEMP_DIR/overlays/$ENV_TYPE/$SERVICE_DIR -type f -name "*.yaml" | sort
+      
+      # Print which environment and path we're deleting from
+      log_step "🔍 DELETING: $TEMP_DIR/overlays/$ENV_TYPE/$SERVICE_DIR (Environment: ${ENV_TYPE})"
+      
+      # Delete the manifests with clear indication of success/failure
+      if kubectl delete -k $TEMP_DIR/overlays/$ENV_TYPE/$SERVICE_DIR --ignore-not-found; then
+        log_success "Resources deleted successfully"
+      else
+        log_warning "Issues encountered while deleting resources (some resources may not have existed)"
       fi
+      
+      # Show remaining resources after deletion
+      log_info "Remaining resources in namespace ${NAMESPACE}:"
+      kubectl get all -n ${NAMESPACE} -l app=${SERVICE_DIR%-deployment} || log_info "No resources found (expected after successful deletion)"
   
   # Delete the prepared manifests
   delete-manifests:
@@ -316,6 +305,7 @@ pipelines:
   verify-deployment:
     run: |
       source ~/.devspace/vars/logging.sh
+      source ~/.devspace/vars/env_type.env
       
       log_phase "VERIFYING DEPLOYMENT STATUS"
       
@@ -493,6 +483,53 @@ commands:
         echo "export K8S_PATH=${K8S_MANIFEST_PATH_LOCAL}" > ~/.devspace/vars/k8s_path.env
       fi
     description: "Remove deployment from cluster (use --profile azure for Azure)"
+
+  delete:
+    command: |
+      # Check if Azure profile is specified
+      if [[ "$*" == *"--profile azure"* ]]; then
+        # Initialize enhanced logging
+        devspace run-pipeline enhanced-logging
+        
+        # Source the logging functions
+        source ~/.devspace/vars/logging.sh
+        
+        log_phase "DELETING DEPLOYMENT FROM AZURE ENVIRONMENT"
+        
+        mkdir -p ~/.devspace/vars
+        # Set environment variables for pipelines
+        echo "export ENV_TYPE=azure" > ~/.devspace/vars/env_type.env
+        echo "export K8S_PATH=${K8S_MANIFEST_PATH_AZURE}" > ~/.devspace/vars/k8s_path.env
+        
+        # Run pipelines with better feedback
+        log_step "Preparing Kubernetes manifests for deletion"
+        devspace run-pipeline prepare-manifests
+        
+        log_step "Deleting Kubernetes resources using kubectl delete -k"
+        devspace run-pipeline delete-k8s-manifests
+        
+        log_step "Cleaning up temporary files"
+        devspace run-pipeline cleanup
+        
+        log_phase "DELETION SUMMARY"
+        log_info "Service: ${SERVICE_NAME}"
+        log_info "Namespace: ${NAMESPACE}"
+        log_info "Environment: Azure"
+        
+        log_success "✨ Azure deployment deletion completed successfully! ✨"
+      else
+        # Local deletion
+        mkdir -p ~/.devspace/vars
+        # Set environment variables for pipelines
+        echo "export ENV_TYPE=local" > ~/.devspace/vars/env_type.env
+        echo "export K8S_PATH=${K8S_MANIFEST_PATH_LOCAL}" > ~/.devspace/vars/k8s_path.env
+        
+        # Run pipelines
+        devspace run-pipeline prepare-manifests
+        devspace run-pipeline delete-k8s-manifests
+        devspace run-pipeline cleanup
+      fi
+    description: "Delete deployment using kubectl delete -k (use --profile azure for Azure environment)"
 
 # Azure ACR profile for Kubernetes
 profiles:

@@ -1,6 +1,14 @@
 version: v2beta1
 name: devspace
 
+imports:
+  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
+
+vars:
+  SERVICE_NAME: "cart"
+  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/cart/"
+  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/cart/"
+
 # This is a list of `pipelines` that DevSpace can execute (you can define your own)
 pipelines:
   # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
