@@ -1,19 +1,19 @@
+
+FROM gradle:7.6.1-jdk17-alpine AS build
+WORKDIR /app
+
+# Copy only the files needed for dependency resolution first
+COPY build.gradle settings.gradle ./
+# Download dependencies - this layer will be cached if the gradle files don't change
+RUN gradle dependencies --no-daemon
+
+# Now copy the source code
+COPY src ./src
+# Build the application
+RUN gradle clean build -x test --no-daemon
+
 FROM ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
 
 WORKDIR /app
 
-# Copy gradle files first for better caching
-COPY build.gradle settings.gradle gradlew ./
-COPY gradle/ gradle/
-
-# Download dependencies
-RUN gradle dependencies --no-daemon
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN gradle clean build -x test --no-daemon
-
-# Copy the startup script and make it executable
-RUN chmod +x devspace_start.sh
+COPY --from=build /app/build/libs/cart-1.0.0.jar app.jar
