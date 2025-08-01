@@ -11,7 +11,7 @@ _You can standup application locally on your laptop/desktop with few steps and a
 
 ## App -  UI/UX, Architecture & Technologies Used
 
-## Architecture         
+## Architecture
 <img src="clusterly-architecture.png" alt="Architecture">
 
 ## Application UI/UX 

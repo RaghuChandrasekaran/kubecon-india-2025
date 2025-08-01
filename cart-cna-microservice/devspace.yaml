@@ -25,6 +25,10 @@ pipelines:
       ensure_pull_secrets --all                         # 2. Ensure pull secrets
       build_images --all                                # 3. Build, tag (git commit hash) and push all images (see "images")
       create_deployments --all                          # 4. Deploy Helm charts and manifests specfied as "deployments"
+  # You can run this pipeline via `devspace debug` (or `devspace run-pipeline debug)
+  debug:
+    run: |-
+      start_dev app-debug           # 1. Start dev mode "app-debug" (see "dev" section)
 
 # This is a list of `images` that DevSpace can build for this project
 # We recommend to skip image building during development (devspace dev) as much as possible
@@ -33,7 +37,7 @@ images:
     image: image.registry.local:5001/cart
     dockerfile: ./Dockerfile.dev
     tags: 
-    - latest
+    - dev
     context: ./
 
 # This is a list of `deployments` that DevSpace can create for this project
@@ -58,10 +62,12 @@ deployments:
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
   app:
-    # Search for the container that runs this image
-    imageSelector: image.registry.local:5001/cart:latest
+    # Search for the container that runs inside the deployment with the label `app: cart-deployment`
+    labelSelector:
+      app: cart-deployment
+    container: cart
     # Replace the container image with this dev-optimized image (allows to skip image building during development)
-    devImage: ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
+    devImage: "image.registry.local:5001/cart:dev"
     # Sync files between the local filesystem and the development container
     sync:
       - path: ./
@@ -84,6 +90,20 @@ dev:
     # Open the following URLs once they return an HTTP status code other than 502 or 503
     open:
       - url: http://localhost:7000
+  app-debug:
+    # Search for the container that runs inside the deployment with the label `app: cart-deployment`
+    labelSelector:
+      app: cart-deployment
+    container: cart
+    command:
+      - java
+      - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:6000
+      - -Dlogging.level.root=INFO
+      - -jar
+      - /app/app.jar
+    ports:
+      - port: "7000:7000"
+      - port: "6000:6000"
 
 # Use the `commands` section to define repeatable dev workflows for this project 
 commands:
