@@ -7,13 +7,15 @@
 
 This is an end-to-end **e-commerce solution** that demonstrates how to build a moder CNA application using microservices architecture with full-stack technologies. This application includes below functional microservices which are independently deployable with bounded context.
 
-_You can standup application locally on your laptop/desktop with few steps and also to AWS._
+_You can standup application locally on your laptop/desktop with few steps and also to AKS._
 
 ## App -  UI/UX, Architecture & Technologies Used
 
-Architecture         |  Application UI/UX
-:-------------------------:|:-------------------------:
-<img src="architecture.png" alt="Architecture"> | <img src="app-showcase.png" alt="Application UI"> 
+## Architecture         
+<img src="clusterly-architecture.png" alt="Architecture">
+
+## Application UI/UX 
+<img src="clusterly-ui.png" alt="Application UI">
 
 ## Functional Microservices
 | Microservice  | Description | Technologies Used |
