@@ -13,4 +13,5 @@ spec:
     spec:
       containers:
       - name: search
-        image: image.registry.local:5001/search:latest
+        image: search
+        imagePullPolicy: Never

@@ -1,0 +1,43 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: kubecon-2025
+
+nodes:
+- role: control-plane
+  extraPortMappings:
+    # Store UI            # Ingress
+    - containerPort: 80
+      hostPort: 80
+      protocol: TCP
+    - containerPort: 443
+      hostPort: 443
+      protocol: TCP
+    # Backend Services
+    - containerPort: 30080 # cart service
+      hostPort: 8080
+      protocol: TCP
+    - containerPort: 30081 # product service
+      hostPort: 8081
+      protocol: TCP
+    - containerPort: 30082  # search service
+      hostPort: 8082
+      protocol: TCP
+    - containerPort: 30083  # users service
+      hostPort: 8083
+      protocol: TCP
+    - containerPort: 30084  # store UI service
+      hostPort: 8084
+      protocol: TCP
+    # DB services
+    - containerPort: 32017  # MongoDB
+      hostPort: 27017
+      protocol: TCP
+    - containerPort: 32379   # Redis
+      hostPort: 6379
+      protocol: TCP
+    - containerPort: 32300   # Elasticsearch
+      hostPort: 9200
+      protocol: TCP
+    - containerPort: 32601   # Kibana
+      hostPort: 5601
+      protocol: TCP

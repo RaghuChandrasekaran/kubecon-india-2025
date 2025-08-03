@@ -1,86 +1,81 @@
 version: v2beta1
-name: users
+name: devspace
 
-imports:
-  - path: "../.devpilot-scripts/devspace-pipelines.yaml"
+images:
+  users:
+    image: users
+    dockerfile: ./Dockerfile
+    rebuildStrategy: always
+    context: ./
 
-vars:
-  SERVICE_NAME: "users"
-  K8S_MANIFEST_PATH_LOCAL: "${K8S_DIR}/infra/k8s/apps/overlays/local/users/"
-  K8S_MANIFEST_PATH_AZURE: "${K8S_DIR}/infra/k8s/apps/overlays/azure/users/"
-
+# This is a list of `pipelines` that DevSpace can execute (you can define your own)
 pipelines:
-  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
-  dev:
-    run: |-
-      start_dev users
   # You can run this pipeline via `devspace deploy` (or `devspace run-pipeline deploy`)
   deploy:
     run: |-
       run_dependencies --all                            # 1. Deploy any projects this project needs (see "dependencies")
       ensure_pull_secrets --all                         # 2. Ensure pull secrets
       build_images --all -t $(git describe --always)    # 3. Build, tag (git commit hash) and push all images (see "images")
-      create_deployments users                           # 4. Deploy manifests
-  # Custom pipeline to run the debug server. You can run this pipeline via `devspace run-pipeline debug-server`
-  debug-server:
+      create_deployments --all                          # 4. Deploy Helm charts and manifests specfied as "deployments"
+  # This is the pipeline for the main command: `devspace dev` (or `devspace run-pipeline dev`)
+  dev:
     run: |-
-      echo "Running users debug server."
-      start_dev users-debug
+      run_dependencies --all       # 1. Deploy any projects this project needs (see "dependencies")
+      ensure_pull_secrets --all    # 2. Ensure pull secrets
+      create_deployments --all     # 3. Deploy Helm charts and manifests specfied as "deployments"
+      start_dev app                # 4. Start dev mode "app" (see "dev" section)
 
+# This is a list of `deployments` that DevSpace can create for this project
+deployments:
+  app:
+    # This deployment uses `kubectl` but you can also define `helm` deployments
+    kubectl:
+      manifests:
+        - ../infra/k8s/apps/overlays/local/users
+      kustomize: true
+
+# This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
-  users:
+  app:
     labelSelector:
       app: users-deployment
-    container: users
-    devImage: "image.registry.local:5001/users:dev"
+    container: users 
+    # Replace the container image with this dev-optimized image (allows to skip image building during development)
+    devImage: ghcr.io/loft-sh/devspace-containers/python:3-alpine
+    # Sync files between the local filesystem and the development container
     sync:
-      - path: ./:/app
-        excludePaths:
-          - .devspace/
-          - __pycache__/
-          - "*.pyc"
-          - .pytest_cache/
-          - .git/
-          - "*.log"
-        initialSync: preferLocal
-        printLogs: true
+      - path: ./
+        uploadExcludeFile: .dockerignore
+    # Open a terminal and use the following command to start it
     terminal:
       command: ./devspace_start.sh
+    # Inject a lightweight SSH server into the container (so your IDE can connect to the remote dev env)
     ssh:
       enabled: true
+    # Make the following commands from my local machine available inside the dev container
+    proxyCommands:
+      - command: devspace
+      - command: kubectl
+      - command: helm
+      - gitCredentials: true
+    # Forward the following ports to be able access your application via localhost
     ports:
       - port: "9090"
+    # Open the following URLs once they return an HTTP status code other than 502 or 503
     open:
-      - url: http://localhost:9090/docs
-    env:
-      - name: PYTHONPATH
-        value: "/app"
-      - name: ENVIRONMENT
-        value: "development"
-# Remote Debug configuration for the users service
-  users-debug:
-    labelSelector:
-      app: users-deployment
-    container: users
-    command:
-      - python
-      - -m
-      - debugpy
-      - --listen
-      - 0.0.0.0:5678
-      - app.py
-    ports:
-      - port: "5678:5678"
+      - url: http://localhost:9090
 
-### Helper commands
+# Use the `commands` section to define repeatable dev workflows for this project 
 commands:
-  # Development commands
-  develop:
-    command: devspace use namespace ${NAMESPACE} && devspace run dev
-    description: "Start the users service in development mode with hot reload and debugging support."
-  debug:
-    command: devspace use namespace ${NAMESPACE} && devspace run-pipeline debug-server
-    description: "Attach to the debug server for remote debugging. Does not modify the application, but allows you to debug it remotely."
-  stop:
-    command: devspace use namespace ${NAMESPACE} && devspace purge
-    description: "Stop the users service and clean up resources."
+  migrate-db:
+    command: |-
+      echo 'This is a cross-platform, shared command that can be used to codify any kind of dev task.'
+      echo 'Anyone using this project can invoke it via "devspace run migrate-db"'
+
+# Define dependencies to other projects with a devspace.yaml
+# dependencies:
+#   api:
+#     git: https://...  # Git-based dependencies
+#     tag: v1.0.0
+#   ui:
+#     path: ./ui        # Path-based dependencies (for monorepos)

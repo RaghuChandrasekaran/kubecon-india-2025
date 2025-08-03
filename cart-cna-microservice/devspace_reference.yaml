@@ -86,7 +86,7 @@ dev:
       - /app/app.jar
     ports:
       - port: "7000:7000"
-      - port: "6000:6000"         
+      - port: "6000:6000"      
 
 # Use the `commands` section to define repeatable dev workflows for this project 
 commands:
@@ -111,3 +111,4 @@ dependencies:
   ui:
     path: ../store-ui
   users-service:
+    path: ../users-cna-microservice 

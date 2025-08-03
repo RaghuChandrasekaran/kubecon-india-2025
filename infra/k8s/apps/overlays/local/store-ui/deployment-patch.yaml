@@ -13,8 +13,8 @@ spec:
     spec:
       containers:
       - name: store-ui
-        image: image.registry.local:5001/store-ui:latest
-        imagePullPolicy: Always
+        image: store-ui
+        imagePullPolicy: Never
         env:
         - name: REACT_APP_PRODUCTS_URL_BASE
           valueFrom:

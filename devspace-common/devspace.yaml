@@ -8,3 +8,9 @@ deployments:
       manifests:
         - ../infra/k8s/shared-services/overlays/local/
       kustomize: true
+  namespace:
+    # Deploy the e-commerce namespace
+    kubectl:
+      manifests:
+        - ../infra/k8s/apps/overlays/local/namespace-only
+      kustomize: true

@@ -14,6 +14,12 @@ RUN gradle clean build -x test --no-daemon
 
 FROM ghcr.io/loft-sh/devspace-containers/java-gradle:7-jdk17-slim
 
+# Switch to root to ensure we have permissions for development
+USER root
+
 WORKDIR /app
+
+# Ensure the app directory is writable for development
+RUN chmod 777 /app
 
 COPY --from=build /app/build/libs/cart-1.0.0.jar app.jar

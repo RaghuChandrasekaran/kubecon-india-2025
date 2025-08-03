@@ -13,4 +13,5 @@ spec:
     spec:
       containers:
       - name: products
-        image: image.registry.local:5001/products:latest
+        image: products
+        imagePullPolicy: Never
