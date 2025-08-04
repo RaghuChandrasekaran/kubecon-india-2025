@@ -27,3 +27,6 @@ gradle/*
 # Ignore DevSpace cache and log folder
 .devspace/
 out/*
+
+# Ignore DevSpace cache and log folder
+.devspace/
