@@ -11,11 +11,11 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /api/cart
+        prefix: /api/cart/
     rewrite:
       uri: /
     route:
     - destination:
         host: cart-service.e-commerce.svc.cluster.local
         port:
-          number: 7000
+          number: 8080

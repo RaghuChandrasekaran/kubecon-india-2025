@@ -7,6 +7,6 @@ resources:
 - cart-vs.yaml
 
 images:
-- name: cart:latest
+- name: cart
   newName: kubecon.azurecr.io/cart
   newTag: latest

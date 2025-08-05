@@ -11,7 +11,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /api/products
+        prefix: /api/products/
     rewrite:
       uri: /
     route:
