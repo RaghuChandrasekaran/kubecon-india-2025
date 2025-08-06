@@ -1,0 +1,47 @@
+../infra/k8s/apps/overlays/local/cart
+
+dependencies:
+  infra:
+    path: ../devspace-common    # Deploy shared services first
+  product-service:
+    path: ../products-cna-microservice
+  search-service:
+    path: ../search-cna-microservice
+  ui:
+    path: ../store-ui
+  users-service:
+    path: ../users-cna-microservice 
+
+    image
+    command:
+      - java
+      - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:6000
+      - -Dlogging.level.root=INFO
+      - -jar
+      - /app/app.jar 
+
+    ports:
+      - port: "7000"
+      - port: "6000" # Debug port       
+
+
+AKS
+  azure:
+    image: kubecon.azurecr.io/cart
+    dockerfile: ./Dockerfile
+    context: ./  
+    rebuildStrategy: always 
+
+
+
+  azure:
+    kubectl:
+      manifests:
+        - ../infra/k8s/apps/overlays/azure/cart
+      kustomize: true
+
+
+  deploy:
+    run: |-
+      build_images azure -t $(git describe --always)
+      create_deployments azure 

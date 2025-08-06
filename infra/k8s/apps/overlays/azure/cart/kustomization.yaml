@@ -10,3 +10,6 @@ images:
 - name: cart
   newName: kubecon.azurecr.io/cart
   newTag: latest
+  
+patches:
+- path: deployment-patch.yaml  

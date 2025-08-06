@@ -7,7 +7,6 @@ pipelines:
   dev:
     run: |-
       run_dependencies --all       # 1. Deploy any projects this project needs (see "dependencies")
-      ensure_pull_secrets --all    # 2. Ensure pull secrets
       build_images --all -t $(git describe --always)
       create_deployments --all     # 3. Deploy Helm charts and manifests specfied as "deployments"
       start_dev app                # 4. Start dev mode "app" (see "dev" section)
@@ -15,8 +14,7 @@ pipelines:
   deploy:
     run: |-
       build_images azure -t $(git describe --always)
-      create_deployments azure
-
+      create_deployments azure 
 # This is a list of `images` that DevSpace can build for this project
 # We recommend to skip image building during development (devspace dev) as much as possible
 images:
@@ -27,8 +25,8 @@ images:
   azure:
     image: kubecon.azurecr.io/cart
     dockerfile: ./Dockerfile
-    context: ./
-    
+    context: ./  
+    rebuildStrategy: always    
 
 # This is a list of `deployments` that DevSpace can create for this project
 deployments:
@@ -38,14 +36,12 @@ deployments:
       manifests:
         - ../infra/k8s/apps/overlays/local/cart
       kustomize: true
-
   azure:
     kubectl:
       manifests:
         - ../infra/k8s/apps/overlays/azure/cart
       kustomize: true
-
-
+       
 
 # This is a list of `dev` containers that are based on the containers created by your deployments
 dev:
@@ -54,7 +50,6 @@ dev:
     imageSelector: cart-dev
     # Replace the container image with this dev-optimized image (allows to skip image building during development)
     devImage: cart-dev
-    # Sync files between the local filesystem and the development container
     command:
       - java
       - -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:6000
@@ -73,7 +68,7 @@ dev:
     # Forward the following ports to be able access your application via localhost
     ports:
       - port: "7000"
-      - port: "6000"
+      - port: "6000" # Debug port
     # Open the following URLs once they return an HTTP status code other than 502 or 503
     open:
       - url: http://localhost:7000
