@@ -1,4 +1,13 @@
-../infra/k8s/apps/overlays/local/cart
+1. kind Create Cluster
+2. devspace use context
+3. devspace use namespace 
+4. devspace init
+5. Path - ../infra/k8s/apps/overlays/local/cart
+6. Add dependencies
+7. Change Dev Image, Command and port
+8. Add azure to image, deployment
+9. Modify deploy pipeline
+
 
 dependencies:
   infra:
@@ -11,7 +20,7 @@ dependencies:
     path: ../store-ui
   users-service:
     path: ../users-cna-microservice 
-
+    
     image
     command:
       - java
@@ -40,8 +49,8 @@ AKS
         - ../infra/k8s/apps/overlays/azure/cart
       kustomize: true
 
-
   deploy:
     run: |-
+      az acr login --name kubecon
       build_images azure -t $(git describe --always)
-      create_deployments azure 
+      create_deployments azure

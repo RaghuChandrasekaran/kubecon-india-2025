@@ -12,14 +12,11 @@ spec:
         app: cart-deployment
     spec:
       affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - cart-deployment
-              topologyKey: kubernetes.azure.com/agentpool
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:        # hard rule
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.azure.com/agentpool              # the node label
+                operator: In
+                values:
+                - usernodepool
